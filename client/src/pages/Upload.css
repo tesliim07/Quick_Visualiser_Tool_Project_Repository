@@ -1,0 +1,112 @@
+/* Container Styling */
+.upload-container {
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Heading */
+  .upload-container h1 {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* Dropzone Styling */
+  .dropzone {
+    border: 2px dashed #007bff;
+    background-color: #eef6ff;
+    padding: 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .dropzone:hover {
+    background-color: #d4e4ff;
+  }
+  
+  .dropzone p {
+    color: #007bff;
+    font-weight: bold;
+  }
+  
+  /* File List */
+  .file-list {
+    text-align: left;
+    margin-top: 15px;
+  }
+  
+  .file-list h2 {
+    font-size: 18px;
+    color: #555;
+  }
+  
+  .file-list ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .file-list li {
+    background-color: #fff;
+    padding: 8px;
+    border-radius: 5px;
+    margin-top: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Upload Button */
+  .upload-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .upload-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .upload-button:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+  
+  /* Upload Status */
+  .upload-status {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #007bff;
+  }
+
+  /* Display Column Datatypes Button */
+  .display-column-datatypes-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 15px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .display-column-datatypes-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .display-column-datatypes-button:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+  
