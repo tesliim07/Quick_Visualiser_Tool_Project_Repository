@@ -8,18 +8,18 @@ const Upload : React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileType, setFileType] = useState<string>("csv");
   const [uploadStatus, setUploadStatus] = useState<string>("");
-  const [columnDataTypes, setColumnDataTypes] = useState<string>("");
+  const [columnSummary, setColumnSummary] = useState<string[]>([]);
   const [disableUploadButton, setDisableUploadButton] = useState<boolean>(true);
-  const [enableDisplayColumnTypesButton, setEnableDisplayColumnTypesButton] = useState<boolean>(true);
+  const [enableDisplayColumnSummaryButton, setEnableDisplayColumnSummaryButton] = useState<boolean>(true);
 
   //Function to handle file selection
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles)
     setUploadStatus("");
-    setColumnDataTypes("");
+    setColumnSummary([]);
     if (acceptedFiles.length > 0){
       setDisableUploadButton(false);
-      setEnableDisplayColumnTypesButton(true);
+      setEnableDisplayColumnSummaryButton(true);
     }
   }, [])
 
@@ -56,18 +56,19 @@ const Upload : React.FC = () => {
     }
   };
 
-  const handleDisplayColumnTypes = async() => {
+  const handleDisplayColumnSummary = async() => {
 
     try{
-      const response = await axios.get("http://localhost:5000/getColumnDataTypes");
+      const response = await axios.get("http://localhost:5000/getColumnDataTypesWithTheirBadDataPercentage");
       if(response.status === 200){
-        setColumnDataTypes(response.data);
-        setEnableDisplayColumnTypesButton(false);
+        setColumnSummary(response.data);
+        setEnableDisplayColumnSummaryButton(false);
       }
     }
     catch (error) {
       console.error("Error fetching column types:", error);
     }
+
   }
 
   return (
@@ -93,11 +94,11 @@ const Upload : React.FC = () => {
           </ul>
       </div>
       <p className="upload-status">{uploadStatus}</p>
-      {uploadStatus === "File(s) upload successful" ? <button onClick={handleDisplayColumnTypes} disabled={!enableDisplayColumnTypesButton} className="display-column-datatypes-button">Display Column Data Types</button> : null}
-      {columnDataTypes !== "" ? <div>
+      {uploadStatus === "File(s) upload successful" ? <button onClick={handleDisplayColumnSummary} disabled={!enableDisplayColumnSummaryButton} className="display-column-summary-button">Display Column Summary</button> : null}
+      {columnSummary.length > 0 ? <div>
         <h2>Column Data Types</h2>
         <ul>
-          { uploadStatus === "File(s) upload successful" ? columnDataTypes.split("\n").map((column, index) => (
+          { uploadStatus === "File(s) upload successful" ? columnSummary.map((column, index) => (
             <li key={index}>{column}</li>
           )) : null}
         </ul>

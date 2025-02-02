@@ -88,8 +88,8 @@
     color: #007bff;
   }
 
-  /* Display Column Datatypes Button */
-  .display-column-datatypes-button {
+  /* Display Column Summary Button */
+  .display-column-summary-button {
     background-color: #007bff;
     color: white;
     border: none;
@@ -101,12 +101,12 @@
     transition: background-color 0.3s ease;
   }
   
-  .display-column-datatypes-button:disabled {
+  .display-column-summary-button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
   }
   
-  .display-column-datatypes-button:hover:not(:disabled) {
+  .display-column-summary-button:hover:not(:disabled) {
     background-color: #0056b3;
   }
   
