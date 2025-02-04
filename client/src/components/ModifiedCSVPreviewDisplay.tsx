@@ -18,11 +18,14 @@ const ModifiedCSVPreviewDisplay: React.FC<ModifiedCSVPreviewDisplayProps> = ({us
                 if(response.status === 200){
                   setFileName(response.data);
                   try{
-                    const response = await axios.get("http://localhost:5000/getUserConfigs", {
-                        params: userConfigs
+                    const response = await axios.post("http://localhost:5000/userConfigs", userConfigs,{
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                     });
                     if(response.status === 200){
                         setModifiedCSVPreview(response.data);
+                        console.log(response.data);
                     }
                   }
                   catch (error) {

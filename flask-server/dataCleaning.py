@@ -1,29 +1,28 @@
 import pandas as pd
-import os
 from werkzeug.utils import secure_filename
 from flask import Flask
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = '../static/uploadedFiles'
+app.config['UPLOAD_FOLDER'] = './uploadedFiles'
 
 
 def read_csv(filepath, encoding_result):
     df = pd.read_csv(filepath, encoding=encoding_result)
     return df
 
-def save_csv(df, filepath):
-    # Extract the filename and extension from the filepath
-    filename, file_extension = os.path.splitext(os.path.basename(filepath))
+# def save_csv(df, filepath):
+#     # Extract the filename and extension from the filepath
+#     filename, file_extension = os.path.splitext(os.path.basename(filepath))
     
-    # Save the cleaned file with the same filename
-    new_file = df.to_csv(f"cleaned_{filename}{file_extension}", index=False)
-    # filename = secure_filename(new_file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    new_file.save(file_path)
-    uploaded_file_path = file_path
-    print(uploaded_file_path)
-    # return 'File has been uploaded successfully', 200
-    return uploaded_file_path
+#     # Save the cleaned file with the same filename
+#     new_file = df.to_csv(f"cleaned_{filename}{file_extension}", index=False)
+#     # filename = secure_filename(new_file.filename)
+#     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#     new_file.save(file_path)
+#     uploaded_file_path = file_path
+#     print(uploaded_file_path)
+#     # return 'File has been uploaded successfully', 200
+#     return uploaded_file_path
 
 
 def ignoreIndexColumns(df):

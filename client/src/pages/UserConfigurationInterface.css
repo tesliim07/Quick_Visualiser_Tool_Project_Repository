@@ -74,6 +74,14 @@ form button:disabled {
     text-align: center;
 }
 
+/* Success message styles */
+.success-message {
+    color: blue;
+    font-weight: bold;
+    margin-top: 10px;
+    text-align: center;
+}
+
 /* Flexbox layout for checkboxes */
 .checkbox-group {
     display: flex;

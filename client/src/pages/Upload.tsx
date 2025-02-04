@@ -38,7 +38,7 @@ const Upload : React.FC = () => {
     const formData = new FormData();
     files.forEach((file) => formData.append("file", file));
 
-    try{
+    try {
       const response = await axios.post("http://localhost:5000/upload", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -51,13 +51,13 @@ const Upload : React.FC = () => {
         setUploadStatus("File(s) upload failed");
       }
     }
-    catch {
+    catch(error){
+      console.log(error);
       setUploadStatus("An error occurred while uploading the file");
     }
   };
 
   const handleDisplayColumnSummary = async() => {
-
     try{
       const response = await axios.get("http://localhost:5000/getColumnDataTypesWithTheirBadDataPercentage");
       if(response.status === 200){
@@ -68,7 +68,10 @@ const Upload : React.FC = () => {
     catch (error) {
       console.error("Error fetching column types:", error);
     }
+  }
 
+  const handleUserConfigurationInterface = () => {
+    window.location.href = '/user-configuration-interface';
   }
 
   return (
@@ -96,83 +99,18 @@ const Upload : React.FC = () => {
       <p className="upload-status">{uploadStatus}</p>
       {uploadStatus === "File(s) upload successful" ? <button onClick={handleDisplayColumnSummary} disabled={!enableDisplayColumnSummaryButton} className="display-column-summary-button">Display Column Summary</button> : null}
       {columnSummary.length > 0 ? <div>
-        <h2>Column Data Types</h2>
+        <h2>Column Data Types with Bad Data Percentage</h2>
         <ul>
           { uploadStatus === "File(s) upload successful" ? columnSummary.map((column, index) => (
             <li key={index}>{column}</li>
           )) : null}
         </ul>
       </div> : null}
+      { uploadStatus === "File(s) upload successful" ? <div>
+        <button type='button' onClick={handleUserConfigurationInterface}>Go to User Configuration Interface</button>
+      </div> : null}
     </div>
   )
-
-  // const [uploadFile, setUploadFile] = useState<File|null>(null)
-  // const [uploadStatus, setUploadStatus] = useState<string>("No File Selected")
-  // const [fileType, setFileType] = useState<string>("csv")
-  // const [uploadFileExtension, setUploadFileExtension] = useState<string|undefined>("")
-
-  // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (event.target.files) {
-  //     const selectedFile = event.target.files[0];
-  //     const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
-  //     setUploadFileExtension(fileExtension);
-  //     if (fileExtension === fileType) {
-  //       setUploadFile(selectedFile);
-  //       setUploadStatus(`${fileType} File selected`);
-  //     } else {
-  //       setUploadFile(null);
-  //       setUploadStatus(`Please select a ${fileType} file`);
-  //     }
-  //   }
-  // };
-
-  // const handleFileTypeChange = (selectedFileType: string) => {
-  //   setFileType(selectedFileType);
-  //   setUploadFile(null); // Reset the selected file when file type changes
-  // }
-
-  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-
-  //   if (uploadFile === null) {
-  //     setUploadStatus("No file selected");
-  //     return;
-  //   }
-
-  //   const formData = new FormData();
-  //   formData.append("file", uploadFile);
-  //   formData.append("fileType", fileType);
-
-  //   try{
-  //     const response = await fetch("http://localhost:5000/upload", {
-  //       method: "POST",
-  //       body: formData
-  //     });
-  //     if(response.ok){
-  //       setUploadStatus("File upload successful");
-  //     }else{
-  //       setUploadStatus("File upload failed");
-  //     }
-  //   }
-  //   catch {
-  //     setUploadStatus("An error occurred while uploading the file");
-  //   }
-  // };
-
-  // return (
-  //   <div>
-  //     <h1>Upload Page</h1>
-  //     <h2>Please only Upload Files of the following format: CSV, JSON(Disabled)</h2>
-  //     <DropDownMenu onFileTypeChange={handleFileTypeChange}/>
-  //     <form className="card" onSubmit={handleSubmit}>
-  //       <input type="file" onChange={handleFileChange} disabled={fileType === ""}/>
-  //       <button type="submit" disabled={uploadFileExtension !== fileType}>
-  //         Upload Dataset
-  //       </button>     
-  //     </form>
-  //     {uploadStatus === "No File Selected" ? <p>Please select a {fileType} file</p> : <p>{uploadStatus}</p>}
-  //   </div>
-  // )
 }
 
 export default Upload

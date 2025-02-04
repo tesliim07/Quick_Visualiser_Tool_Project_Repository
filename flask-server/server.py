@@ -3,19 +3,38 @@ from flask_wtf import FlaskForm
 from wtforms import FileField, SubmitField
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
+# from flask_sqlalchemy import SQLAlchemy
 import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
-from dataCleaning import ignoreIndexColumns, changeColumnDataTypes, getColumnSummary, save_csv
+from dataCleaning import ignoreIndexColumns, changeColumnDataTypes, getColumnSummary
+from schemaGenerator import generate_create_table_sql
+import psycopg2
+from sqlalchemy import create_engine, text
+import logging
+
 
 app = Flask(__name__)
 CORS(app) #Enable CORS for all routes
 
-app.config['UPLOAD_FOLDER'] = '../static/uploadedFiles'
+app.config['UPLOAD_FOLDER'] = './uploadedFiles'
+
+engine = create_engine('postgresql://QuickVisualiserToolUser:securepostgres@postgres:5432/QuickVisualiserToolDatabase')
+# Database configuration
+# DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://QuickVisualiserToolUser:securepostgres@postgres:5432/QuickVisualiserToolDatabase')
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize the database
+# db = SQLAlchemy(app)
 
 # Global variable to store the uploaded file
 uploaded_file_path= None
+
+logging.basicConfig(level=logging.INFO)  # Ensures INFO logs are shown
+app.logger.setLevel(logging.INFO)
+
 
 class UploadFileForm(FlaskForm):
     file = FileField('File', validators=[InputRequired()])
@@ -100,36 +119,87 @@ def getColumnDataTypesWithTheirBadDataPercentage():
     except Exception as e:
         return f'An error occurred while processing the file: {str(e)}', 500
 
-@app.route('/getUserConfigs', methods=['GET'])
-def getUserConfigs():
+@app.route('/userConfigs', methods=['POST'])
+def userConfigs():
     global uploaded_file_path
     if uploaded_file_path is None:
         return 'No file uploaded', 400
     
-    user_configs = request.args
+    user_configs = request.json
+    if not user_configs:
+        return jsonify({'error': 'No configurations provided'}), 400
     try:
         with open(uploaded_file_path, "rb") as file:
             result = chardet.detect(file.read())
             encoding_result = result.get('encoding')
             df = pd.read_csv(uploaded_file_path, encoding=encoding_result)
+            cleaned_df = df
             if user_configs.get('removeDuplicates') == "yes": 
-                df.drop_duplicates(inplace=True)
+                cleaned_df=cleaned_df.drop_duplicates()
             if user_configs.get('removeRowsWithNullValues') == "yes":
-                df.dropna(inplace=True)
+                cleaned_df=cleaned_df.dropna()
             if user_configs.get('ignoreIndexColumns') == "yes":
-                ignoreIndexColumns(df)
+                ignoreIndexColumns(cleaned_df)
             # if user_configs.get('detectBadDataPercentagePerColumn') == "yes":
             #     detectBadDataPercentagePerColumn(df)
             if user_configs.get('changeColumnDataTypes') == "yes":
-                changeColumnDataTypes(user_configs.get('changeDataTypes'),df)
-            preview = df.head(20)
+                changeColumnDataTypes(user_configs.get('changeDataTypes'),cleaned_df)
+            preview = cleaned_df.head(20)
             return preview.to_json(orient='split'), 200
+            # return jsonify(cleaned_df.to_json(orient='split')), 200
         
         
     except Exception as e:
-        return f'An error occurred while processing the file: {str(e)}', 500
-    
+        return f'An error occurred while getting the preview of the modified file: {str(e)}', 500
 
+@app.route('/saveCleanedFile', methods=['POST'])
+def saveCleanedFile():
+    global uploaded_file_path
+    if uploaded_file_path is None:
+        return 'No file uploaded', 400
+    user_configs = request.json
+    if not user_configs:
+        return jsonify({'error': 'No configurations provided'}), 400
+    try:
+        with open(uploaded_file_path, "rb") as file:
+            result = chardet.detect(file.read())
+            encoding_result = result.get('encoding')
+            df = pd.read_csv(uploaded_file_path, encoding=encoding_result)
+            cleaned_df = df
+            if user_configs.get('removeDuplicates') == "yes": 
+                app.logger.info("remove duplicate")
+                cleaned_df = cleaned_df.drop_duplicates()
+            if user_configs.get('removeRowsWithNullValues') == "yes":
+                app.logger.info("remove rows with null values")
+                cleaned_df = cleaned_df.dropna()
+            if user_configs.get('ignoreIndexColumns') == "yes":
+                ignoreIndexColumns(cleaned_df)
+            if user_configs.get('changeColumnDataTypes') == "yes":
+                changeColumnDataTypes(user_configs.get('changeDataTypes'),cleaned_df)
+            table_name = os.path.basename(uploaded_file_path).split('.')[0]
+            create_table_sql = generate_create_table_sql(cleaned_df, table_name)
+            
+            # Log the generated SQL statement
+            app.logger.info(f'Generated SQL: {create_table_sql}')
+            
+            # Save the cleaned file to the database
+            with engine.connect() as conn:
+                conn.execute(text(create_table_sql))
+                conn.commit()
+                
+                cleaned_df.to_sql(table_name, engine, if_exists="replace", index=False)
+            # Close connection
+            # cursor.close()
+            # conn.close()
+                
+            return f'{table_name} has been cleaned and saved successfully to the database', 200
+            
+    except Exception as e:
+        app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
+        return f'An error occurred while saving the file: {str(e)}', 500   
+
+
+    
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
     

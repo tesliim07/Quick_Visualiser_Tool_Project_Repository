@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import axios from 'axios';
 import './UserConfigurationInterface.css';
 import ModifiedCSVPreviewDisplay from '../components/ModifiedCSVPreviewDisplay';
@@ -13,9 +13,18 @@ const UserConfigurationInterface : React.FC = () => {
     // const[selectedDetectBadDataPercentagePerColumnCheckbox, setselectedDetectBadDataPercentagePerColumnCheckbox] = useState<string>("yes");
     const[selectedChangeDataTypesCheckbox, setselectedChangeDataTypesCheckbox] = useState<string>("yes");
     const [changeDataTypesText, setChangeDataTypesText] = useState<string>("");
-    const [errorMessage, setErrorMessage] = useState<string|null>(null);
-    const [successfulMessage, setSuccessMessage] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string>("");
+    const [successfulMessage, setSuccessMessage] = useState<string>("");
+    const [saveMessage, setSaveMessage] = useState<string>("");
+    const[disableApplyCleaningButton, setDisableApplyCleaningButton] = useState<boolean>(false);
+    const [showSaveContainer, setShowSaveContainer] = useState<boolean>(false);
 
+    useEffect(() => {
+        setErrorMessage("");
+        setSuccessMessage("");
+       setDisableApplyCleaningButton(false);
+       setShowSaveContainer(false);
+    },[selectedChangeDataTypesCheckbox, selectedIgnoreIndexColumnsCheckbox, selectedRemoveRowsWithNullsCheckbox, selectedRemoveDuplicatesCheckbox]);
     const handleRemoveDuplicatesCheckboxChange = (value: string) => {
         setselectedRemoveDuplicatesCheckbox(value);
     }
@@ -38,11 +47,13 @@ const UserConfigurationInterface : React.FC = () => {
 
     const handleChangeDataTypesText = (event: React.ChangeEvent<HTMLInputElement>) => {
         setChangeDataTypesText(event.target.value);
-        setErrorMessage(null);
+        setErrorMessage("");
     }
 
     const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        setDisableApplyCleaningButton(true);
 
         try{
             const response = await axios.get("http://localhost:5000/getColumnNames");
@@ -79,7 +90,7 @@ const UserConfigurationInterface : React.FC = () => {
 
         const formData = {
             removeDuplicates: selectedRemoveDuplicatesCheckbox,
-            removeRowsWithNulls: selectedRemoveRowsWithNullsCheckbox,
+            removeRowsWithNullValues: selectedRemoveRowsWithNullsCheckbox,
             ignoreIndexColumns: selectedIgnoreIndexColumnsCheckbox,
             // detectBadDataPercentagePerColumn: selectedDetectBadDataPercentagePerColumnCheckbox,
             changeColumnDataTypes: selectedChangeDataTypesCheckbox,
@@ -92,26 +103,57 @@ const UserConfigurationInterface : React.FC = () => {
         setUserConfigs(formData);
     }
 
+    const handleYesButtonClicked = async() => {
+
+        try{
+            const response = await axios.post("http://localhost:5000/saveCleanedFile", userConfigs, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if(response.status === 200){
+                setSaveMessage("File saved successfully");
+                console.log("UserConfigurationInterface: File saved successfully");
+            }
+        }
+        catch (error) {
+            console.log("UserConfigurationInterface: Error saving file:", error);
+            setSaveMessage("Error saving file");
+        }
+    }
+
+    const handleNoButtonClick = () => {
+        window.location.reload();
+    };
+
+    const handleApplyCleaning = () => {
+        setShowSaveContainer(true);
+    }
+
     return(
     <>
+        <div>
+            <p>This page is where you can set out you want to clean your file</p>
+            <p>When done you will see a save to database button at the bottom of this page</p>
+        </div>
         <div className="container">
             <h1>User Configuration Interface Page</h1>
             <form onSubmit={handleSubmit}>
-                <div>
+                <div className='container'>
                     <p>Remove Duplicates</p>
                     <label>No</label>
                     <input type='checkbox' name='removeDuplicatesNo' id='removeDuplicatesNo' checked={selectedRemoveDuplicatesCheckbox === "no"} onChange={() => handleRemoveDuplicatesCheckboxChange("no")}/>
                     <label>Yes</label>
                     <input type='checkbox' name='removeDuplicatesYes' id='removeDuplicatesYes' checked={selectedRemoveDuplicatesCheckbox === "yes"} onChange={() => handleRemoveDuplicatesCheckboxChange("yes")}/>
                 </div>
-                <div>
+                <div className='container'>
                     <p>Remove Rows with Nulls</p>
                     <label>No</label>
                     <input type='checkbox' name='removeRowsWithNullsNo' id='removeRowsWithNullsNo' checked={selectedRemoveRowsWithNullsCheckbox === "no"} onChange={() => handleRemoveRowsWithNullsCheckboxChange("no")}/>
                     <label>Yes</label>
                     <input type='checkbox' name='removeRowsWithNullsYes' id='removeRowsWithNullsYes' checked={selectedRemoveRowsWithNullsCheckbox === "yes"} onChange={() => handleRemoveRowsWithNullsCheckboxChange("yes")}/>
                 </div>
-                <div>
+                <div className='container'>
                     <p>Ignore Index Columns</p>
                     <label>No</label>
                     <input type='checkbox' name='ignoreIndexColumnsNo' id='ignoreIndexColumnsNo' checked={selectedIgnoreIndexColumnsCheckbox === "no"} onChange={() => handleIgnoreIndexColumnsCheckboxChange("no")}/>
@@ -125,7 +167,7 @@ const UserConfigurationInterface : React.FC = () => {
                     <label>Yes</label>
                     <input type='checkbox' name='detectBadDataPercentagePerColumnYes' id='detectBadDataPercentagePerColumnYes' checked={selectedDetectBadDataPercentagePerColumnCheckbox === "yes"} onChange={() => handleDetectBadDataPercentagePerColumnCheckboxChange("yes")}/>
                 </div> */}
-                <div>
+                <div className='container'>
                     <p>Change Data Types</p>
                     <label>No</label>
                     <input type='checkbox' name='changeDataTypesNo' id='changeDataTypesNo' checked={selectedChangeDataTypesCheckbox === "no"} onChange={() => handleChangeDataTypesCheckboxChange("no")}/>
@@ -139,14 +181,22 @@ const UserConfigurationInterface : React.FC = () => {
                     </div> : null}
                 </div>
                 {errorMessage && <p className="error-message">{errorMessage}</p>}
-                <button type='submit' disabled={selectedChangeDataTypesCheckbox=="yes" && changeDataTypesText===""}>Submit</button>
+                {successfulMessage && <p className="success-message">{successfulMessage}</p>}
+                <button type='submit' onClick={handleApplyCleaning}disabled={(selectedChangeDataTypesCheckbox=="yes" && changeDataTypesText==="") || (disableApplyCleaningButton==true)}>Apply Cleaning</button>
             </form>
         </div>
         {
-            successfulMessage && <div className="">
+            (userConfigs!==null && disableApplyCleaningButton ) && <div className="">
+                {/* <button type="button" className="" onClick={handleFetchModifiedCSVPreview}>Fetch Modified Preview</button> */}
                 <ModifiedCSVPreviewDisplay userConfigs={userConfigs}/>
             </div>
         }
+        {showSaveContainer && <div className='container'>
+            <p>Do you want to save cleaned file</p>
+            <button type="button" onClick={handleYesButtonClicked}>Yes</button>
+            <button type="button" onClick={handleNoButtonClick}>No</button>
+            {saveMessage && <p>{saveMessage}</p>}
+        </div>}
     </>
     )
 
