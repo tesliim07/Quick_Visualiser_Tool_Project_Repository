@@ -2,6 +2,7 @@ import {useState, useEffect} from 'react';
 import axios from 'axios';
 import './UserConfigurationInterface.css';
 import ModifiedCSVPreviewDisplay from '../components/ModifiedCSVPreviewDisplay';
+import Popup from '../components/PopUp';
 
 const UserConfigurationInterface : React.FC = () => {
     const dataTypesOptions = ["int", "float", "object", "bool", "datetime"];
@@ -14,17 +15,60 @@ const UserConfigurationInterface : React.FC = () => {
     const[selectedChangeDataTypesCheckbox, setselectedChangeDataTypesCheckbox] = useState<string>("yes");
     const [changeDataTypesText, setChangeDataTypesText] = useState<string>("");
     const [errorMessage, setErrorMessage] = useState<string>("");
-    const [successfulMessage, setSuccessMessage] = useState<string>("");
+    const [successfulMessage, setSuccessfulMessage] = useState<string>("");
     const [saveMessage, setSaveMessage] = useState<string>("");
     const[disableApplyCleaningButton, setDisableApplyCleaningButton] = useState<boolean>(false);
-    const [showSaveContainer, setShowSaveContainer] = useState<boolean>(false);
+    const [tableNamesFromDB, setTableNamesFromDB] = useState<string[]>([]);
+    const [fileName, setFileName] = useState<string>("");
 
     useEffect(() => {
+        const fetchTableNames = async () => {
+            try {
+                const response = await axios.get("http://localhost:5000/getTableNamesFromDatabase");
+                if (response.status === 200) {
+                    setTableNamesFromDB(response.data);
+                    console.log("User configuration interface: " + response.data)
+                }
+            } catch (error) {
+                console.error("Error fetching table names from Database:", error);
+            }
+        };
+
+        const fetchFileName = async () => {
+            try {
+                const response = await axios.get("http://localhost:5000/getFileName");
+                if (response.status === 200) {
+                    setFileName(response.data);
+                    console.log("User configuration interface: " + response.data)
+                }
+            } catch (error) {
+                console.error("Error fetching file name:", error);
+            }
+        };
+
+        const fetchColumnNames = async () => {
+            try{
+                const response = await axios.get("http://localhost:5000/getColumnNames");
+                if(response.status === 200){
+                  setColumnNames(response.data);
+                  console.log("User configuration interface: " + response.data)
+                }
+              }
+              catch (error) {
+                console.error("UserConfigurationInterface: Error fetching column names:", error);
+                setErrorMessage("Error fetching column names");
+                return;
+              }
+
+        }
+
+        fetchTableNames();
+        fetchFileName();
+        fetchColumnNames();
         setErrorMessage("");
-        setSuccessMessage("");
-       setDisableApplyCleaningButton(false);
-       setShowSaveContainer(false);
-    },[selectedChangeDataTypesCheckbox, selectedIgnoreIndexColumnsCheckbox, selectedRemoveRowsWithNullsCheckbox, selectedRemoveDuplicatesCheckbox]);
+        setSuccessfulMessage("");
+        setDisableApplyCleaningButton(false);
+    },[selectedChangeDataTypesCheckbox, selectedIgnoreIndexColumnsCheckbox, selectedRemoveRowsWithNullsCheckbox, selectedRemoveDuplicatesCheckbox, changeDataTypesText]);
     const handleRemoveDuplicatesCheckboxChange = (value: string) => {
         setselectedRemoveDuplicatesCheckbox(value);
     }
@@ -55,21 +99,12 @@ const UserConfigurationInterface : React.FC = () => {
 
         setDisableApplyCleaningButton(true);
 
-        try{
-            const response = await axios.get("http://localhost:5000/getColumnNames");
-            if(response.status === 200){
-              setColumnNames(response.data);
-            }
-          }
-          catch (error) {
-            console.error("UserConfigurationInterface: Error fetching column names:", error);
-            setErrorMessage("Error fetching column names");
-            return; // Exit the function if there's an error
-          }
+        
 
         
         // Parse the changeDataTypesText into a JSON object
         let changeDataTypes = {};
+        let hasError = false;
         if (selectedChangeDataTypesCheckbox === "yes"){
             changeDataTypes = changeDataTypesText.split(',').reduce((acc, item) => {
                 const [key, value] = item.split(':').map(str => str.trim());
@@ -77,7 +112,8 @@ const UserConfigurationInterface : React.FC = () => {
                     const error = `Invalid column name or data type: ${key}, ${value}`;
                     console.error(error);
                     setErrorMessage(error);
-                    return acc;
+                    hasError = true;
+                    return acc; 
                 }
                 if (key && value) {
                     acc[key] = value;
@@ -86,6 +122,10 @@ const UserConfigurationInterface : React.FC = () => {
             }, {} as { [key: string]: string });
         }
         
+        if (hasError) {
+            setDisableApplyCleaningButton(false);
+            return;
+        }
         
 
         const formData = {
@@ -97,14 +137,13 @@ const UserConfigurationInterface : React.FC = () => {
             changeDataTypes: selectedChangeDataTypesCheckbox === "yes" ? changeDataTypes : {}
         };
 
-        setSuccessMessage("User configuration successful");
+        setSuccessfulMessage("User configuration successful");
 
         console.log(JSON.stringify(formData, null, 2));
         setUserConfigs(formData);
     }
 
     const handleYesButtonClicked = async() => {
-
         try{
             const response = await axios.post("http://localhost:5000/saveCleanedFile", userConfigs, {
                 headers: {
@@ -125,10 +164,6 @@ const UserConfigurationInterface : React.FC = () => {
     const handleNoButtonClick = () => {
         window.location.reload();
     };
-
-    const handleApplyCleaning = () => {
-        setShowSaveContainer(true);
-    }
 
     return(
     <>
@@ -180,26 +215,36 @@ const UserConfigurationInterface : React.FC = () => {
                         <input type='text' name='changeDataTypesText' id='changeDataTypesText' placeholder='Enter the column name with the datatype' value={changeDataTypesText} onChange={handleChangeDataTypesText}/>
                     </div> : null}
                 </div>
-                {errorMessage && <p className="error-message">{errorMessage}</p>}
-                {successfulMessage && <p className="success-message">{successfulMessage}</p>}
-                <button type='submit' onClick={handleApplyCleaning}disabled={(selectedChangeDataTypesCheckbox=="yes" && changeDataTypesText==="") || (disableApplyCleaningButton==true)}>Apply Cleaning</button>
+                {errorMessage ? <p className="error-message">{errorMessage}</p> : null}
+                
+                {successfulMessage ? <p className="success-message">{successfulMessage}</p> : null}
+                <button type='submit' disabled={(selectedChangeDataTypesCheckbox=="yes" && changeDataTypesText==="") || (disableApplyCleaningButton==true)}>Apply Cleaning</button>
             </form>
         </div>
         {
             (userConfigs!==null && disableApplyCleaningButton ) && <div className="">
-                {/* <button type="button" className="" onClick={handleFetchModifiedCSVPreview}>Fetch Modified Preview</button> */}
                 <ModifiedCSVPreviewDisplay userConfigs={userConfigs}/>
+                <div className='container'>
+                    {tableNamesFromDB.includes(fileName) ? 
+                    <div className='container'>
+                        <p>File already exists in the database, do you want to overwrite it?</p>
+                        <button type="button" onClick={handleYesButtonClicked} >Yes</button>
+                        <button type="button" onClick={handleNoButtonClick}>No</button>
+                    </div> : 
+                    <div>
+                        <p>Do you want to save cleaned file</p>
+                        <button type="button" onClick={handleYesButtonClicked}>Yes</button>
+                        <button type="button" onClick={handleNoButtonClick}>No</button>
+                    </div>}
+                    {saveMessage &&
+                        <Popup isOpen={true} message={saveMessage} onClose={handleNoButtonClick}/>
+                    }
+                </div>
+                
             </div>
         }
-        {showSaveContainer && <div className='container'>
-            <p>Do you want to save cleaned file</p>
-            <button type="button" onClick={handleYesButtonClicked}>Yes</button>
-            <button type="button" onClick={handleNoButtonClick}>No</button>
-            {saveMessage && <p>{saveMessage}</p>}
-        </div>}
     </>
     )
-
 }
 
 export default UserConfigurationInterface;

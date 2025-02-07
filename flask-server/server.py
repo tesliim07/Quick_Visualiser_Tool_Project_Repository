@@ -63,8 +63,9 @@ def getFileName():
     global uploaded_file_path
     if uploaded_file_path is None:
         return 'No file uploaded', 400
-    filename = os.path.basename(uploaded_file_path)
-    return filename, 200
+    filename = os.path.basename(uploaded_file_path).split('.')[0]
+    lowercase_filename = filename.lower()
+    return lowercase_filename, 200
 
 @app.route('/getColumnDataTypes', methods=['GET'])
 def getColumnDataTypes():
@@ -143,10 +144,10 @@ def userConfigs():
             # if user_configs.get('detectBadDataPercentagePerColumn') == "yes":
             #     detectBadDataPercentagePerColumn(df)
             if user_configs.get('changeColumnDataTypes') == "yes":
-                changeColumnDataTypes(user_configs.get('changeDataTypes'),cleaned_df)
+                change_dataTypes = user_configs.get('changeDataTypes',{})
+                cleaned_df=changeColumnDataTypes(change_dataTypes,cleaned_df)
             preview = cleaned_df.head(20)
             return preview.to_json(orient='split'), 200
-            # return jsonify(cleaned_df.to_json(orient='split')), 200
         
         
     except Exception as e:
@@ -175,30 +176,44 @@ def saveCleanedFile():
             if user_configs.get('ignoreIndexColumns') == "yes":
                 ignoreIndexColumns(cleaned_df)
             if user_configs.get('changeColumnDataTypes') == "yes":
-                changeColumnDataTypes(user_configs.get('changeDataTypes'),cleaned_df)
+                change_dataTypes = user_configs.get('changeDataTypes',{})
+                app.logger.info(f'Change column data types: {change_dataTypes}')
+                cleaned_df=changeColumnDataTypes(change_dataTypes,cleaned_df)
             table_name = os.path.basename(uploaded_file_path).split('.')[0]
-            create_table_sql = generate_create_table_sql(cleaned_df, table_name)
+            lowercase_table_name = table_name.lower()
+            create_table_sql = generate_create_table_sql(cleaned_df, lowercase_table_name)
             
             # Log the generated SQL statement
             app.logger.info(f'Generated SQL: {create_table_sql}')
             
             # Save the cleaned file to the database
             with engine.connect() as conn:
+                app.logger.info(f"Dropping table: {lowercase_table_name}")
+                conn.execute(text(f"DROP TABLE IF EXISTS {lowercase_table_name}"))
+                conn.commit()
+                
+                app.logger.info(f"Creating table with SQL: {create_table_sql}")
                 conn.execute(text(create_table_sql))
                 conn.commit()
                 
-                cleaned_df.to_sql(table_name, engine, if_exists="replace", index=False)
-            # Close connection
-            # cursor.close()
-            # conn.close()
+            cleaned_df.to_sql(lowercase_table_name, engine, if_exists="append", index=False)
                 
-            return f'{table_name} has been cleaned and saved successfully to the database', 200
+            return f'{lowercase_table_name} has been cleaned and saved successfully to the database', 200
             
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
         return f'An error occurred while saving the file: {str(e)}', 500   
 
-
+@app.route('/getTableNamesFromDatabase', methods=['GET'])
+def getTableNamesFromDatabase():
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"))
+            table_names = [row[0] for row in result]
+            app.logger.info(f'Table names: {table_names}')
+            return jsonify(table_names), 200
+    except Exception as e:
+        return f'An error occurred while fetching the table names: {str(e)}', 500
     
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

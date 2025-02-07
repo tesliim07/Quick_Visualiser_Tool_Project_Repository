@@ -53,9 +53,17 @@ def getColumnSummary(df):
         
     return column_summary
 
-def changeColumnDataTypes(columns, df):
-    for column in columns:
-        
-        df[column] = df[column.name].astype(column.data_type)
-    return df
+def changeColumnDataTypes(change_dataTypes, df):
+    try:
+        for column, dtype in change_dataTypes.items():
+            if column in df.columns:
+                df[column] = df[column].astype(dtype)
+                print(f"Changed column '{column}' to type '{dtype}'")
+            else:
+                print(f"Column '{column}' not found in DataFrame")
+
+        return df  # Return the modified DataFrame
+    except Exception as e:
+        print(f"Error changing column data types: {str(e)}")
+        return df  # Return original DataFrame if an error occurs
     
