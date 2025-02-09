@@ -9,6 +9,7 @@ from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
 from dataCleaning import ignoreIndexColumns, changeColumnDataTypes, getColumnSummary
+from visualisations import generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_histogram_urls, generate_time_plots_urls
 from schemaGenerator import generate_create_table_sql
 import psycopg2
 from sqlalchemy import create_engine, text
@@ -215,6 +216,90 @@ def getTableNamesFromDatabase():
     except Exception as e:
         return f'An error occurred while fetching the table names: {str(e)}', 500
     
+@app.route('/getVisualisationUrls/<string:fileName>', methods=['GET'])
+def getVisualisationUrls(fileName):
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"))
+            table_names = [row[0] for row in result]
+        
+        if fileName.lower() in table_names:
+            # If the table exists, perform the desired operations
+            table_name = fileName.lower()
+            with engine.connect() as conn:
+                df = pd.read_sql_table(table_name, conn)
+                correlation_heatmap_url = generate_correlation_heatmap_url(df)
+                app.logger.info(f"Generated correlation heatmap: {correlation_heatmap_url}")
+                correlation_heatmap_squared_url = generate_correlation_heatmap_squared_url(df)
+                visualisations = {
+                    "correlation_heatmap_url": correlation_heatmap_url,
+                    "correlation_heatmap_squared_url": correlation_heatmap_squared_url
+                }
+                app.logger.info(f"visualisations: {visualisations}")
+                time_columns = df.select_dtypes(include=['datetime']).columns.tolist()
+                if time_columns != []:
+                    time_plots_urls = generate_time_plots_urls(df, time_columns)
+                    visualisations["time_plots_urls"] = time_plots_urls
+                else:
+                    histogram_urls = generate_histogram_urls(df)
+                    box_plot_url = generate_box_plot_url(df)
+                    bar_plot_urls = generate_bar_plots_urls(df)
+                    
+                    visualisations["histogram_urls"] = histogram_urls
+                    visualisations["box_plot_url"] = box_plot_url
+                    visualisations["bar_plots_urls"] = bar_plot_urls
+                    
+                app.logger.info(visualisations)
+        
+                return jsonify(visualisations), 200
+        else:
+            return f'Table {fileName} does not exist in the database', 404
+    except Exception as e:
+        app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
+        return f'An error occurred while fetching the visualisations: {str(e)}', 500
+
+
+@app.route('/getVisualisationImages/<string:fileName>', methods=['GET'])
+def getVisualisationImages(fileName):
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"))
+            table_names = [row[0] for row in result]
+        
+        if fileName.lower() in table_names:
+            # If the table exists, perform the desired operations
+            table_name = fileName.lower()
+            with engine.connect() as conn:
+                df = pd.read_sql_table(table_name, conn)
+                correlation_heatmap_img = generate_correlation_heatmap(df)
+                app.logger.info(f"Generated correlation heatmap: {correlation_heatmap_img}")
+                correlation_heatmap_squared_img = generate_correlation_heatmap_squared(df)
+                visualisations = {
+                    "correlation_heatmap_img": correlation_heatmap_img,
+                    "correlation_heatmap_squared_img": correlation_heatmap_squared_img
+                }
+                app.logger.info(f"visualisations: {visualisations}")
+                time_columns = df.select_dtypes(include=['datetime']).columns.tolist()
+                if time_columns != []:
+                    time_plots_imgs = generate_time_plots(df, time_columns)
+                    visualisations["time_plots_imgs"] = time_plots_imgs
+                else:
+                    histogram_imgs = generate_histogram(df)
+                    box_plot_img = generate_box_plot(df)
+                    bar_plot_imgs = generate_bar_plots(df)
+                    
+                    visualisations["histogram_imgs"] = histogram_imgs
+                    visualisations["box_plot_img"] = box_plot_img
+                    visualisations["bar_plots_imgs"] = bar_plot_imgs
+                    
+                app.logger.info(visualisations)
+        
+                return jsonify(visualisations), 200
+        else:
+            return f'Table {fileName} does not exist in the database', 404
+    except Exception as e:
+        app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
+        return f'An error occurred while fetching the visualisations: {str(e)}', 500
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
     

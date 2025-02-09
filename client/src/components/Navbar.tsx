@@ -15,6 +15,9 @@ const Navbar : React.FC = () => {
                 <li>
                     <NavLink to="/user-configuration-interface">User Configuration Page</NavLink>
                 </li>
+                <li>
+                    <NavLink to="/visualisations">Visualisations Page</NavLink>
+                </li>
             </ul>
         </nav>
     )
