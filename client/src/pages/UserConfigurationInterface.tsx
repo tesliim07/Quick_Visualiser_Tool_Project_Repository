@@ -4,13 +4,17 @@ import './UserConfigurationInterface.css';
 import ModifiedCSVPreviewDisplay from '../components/ModifiedCSVPreviewDisplay';
 import Popup from '../components/PopUp';
 
+interface ColumnNamesDict {
+    [filename: string]: string[];
+  }
+
 const UserConfigurationInterface : React.FC = () => {
     const dataTypesOptions = ["int", "float", "object", "bool", "datetime"];
-    const [columnNames, setColumnNames] = useState<string[]>([]);
+    const [columnNamesDict, setColumnNamesDict] = useState<ColumnNamesDict>({});
     const [userConfigs, setUserConfigs] = useState<any>(null);
     const[selectedRemoveDuplicatesCheckbox, setselectedRemoveDuplicatesCheckbox] = useState<string>("yes");
     const[selectedRemoveRowsWithNullsCheckbox, setselectedRemoveRowsWithNullsCheckbox] = useState<string>("yes");
-    const[selectedIgnoreIndexColumnsCheckbox, setselectedIgnoreIndexColumnsCheckbox] = useState<string>("yes");
+    // const[selectedIgnoreIndexColumnsCheckbox, setselectedIgnoreIndexColumnsCheckbox] = useState<string>("yes");
     // const[selectedDetectBadDataPercentagePerColumnCheckbox, setselectedDetectBadDataPercentagePerColumnCheckbox] = useState<string>("yes");
     const[selectedChangeDataTypesCheckbox, setselectedChangeDataTypesCheckbox] = useState<string>("yes");
     const [changeDataTypesText, setChangeDataTypesText] = useState<string>("");
@@ -19,7 +23,7 @@ const UserConfigurationInterface : React.FC = () => {
     const [saveMessage, setSaveMessage] = useState<string>("");
     const[disableApplyCleaningButton, setDisableApplyCleaningButton] = useState<boolean>(false);
     const [tableNamesFromDB, setTableNamesFromDB] = useState<string[]>([]);
-    const [fileName, setFileName] = useState<string>("");
+    const [fileNames, setFileNames] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchTableNames = async () => {
@@ -34,11 +38,11 @@ const UserConfigurationInterface : React.FC = () => {
             }
         };
 
-        const fetchFileName = async () => {
+        const fetchFileNames = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/getFileName");
+                const response = await axios.get("http://localhost:5000/getFileNames");
                 if (response.status === 200) {
-                    setFileName(response.data);
+                    setFileNames(response.data);
                     console.log("User configuration interface: " + response.data)
                 }
             } catch (error) {
@@ -50,25 +54,25 @@ const UserConfigurationInterface : React.FC = () => {
             try{
                 const response = await axios.get("http://localhost:5000/getColumnNames");
                 if(response.status === 200){
-                  setColumnNames(response.data);
+                  setColumnNamesDict(response.data);
                   console.log("User configuration interface: " + response.data)
                 }
               }
               catch (error) {
                 console.error("UserConfigurationInterface: Error fetching column names:", error);
-                setErrorMessage("Error fetching column names");
+                // setErrorMessage("Error fetching column names");
                 return;
               }
 
         }
 
         fetchTableNames();
-        fetchFileName();
+        fetchFileNames();
         fetchColumnNames();
         setErrorMessage("");
         setSuccessfulMessage("");
         setDisableApplyCleaningButton(false);
-    },[selectedChangeDataTypesCheckbox, selectedIgnoreIndexColumnsCheckbox, selectedRemoveRowsWithNullsCheckbox, selectedRemoveDuplicatesCheckbox, changeDataTypesText]);
+    },[selectedChangeDataTypesCheckbox, selectedRemoveRowsWithNullsCheckbox, selectedRemoveDuplicatesCheckbox]);
     const handleRemoveDuplicatesCheckboxChange = (value: string) => {
         setselectedRemoveDuplicatesCheckbox(value);
     }
@@ -77,9 +81,9 @@ const UserConfigurationInterface : React.FC = () => {
         setselectedRemoveRowsWithNullsCheckbox(value);
     }
 
-    const handleIgnoreIndexColumnsCheckboxChange = (value: string) => {
-        setselectedIgnoreIndexColumnsCheckbox(value);
-    }
+    // const handleIgnoreIndexColumnsCheckboxChange = (value: string) => {
+    //     setselectedIgnoreIndexColumnsCheckbox(value);
+    // }
 
     // const handleDetectBadDataPercentagePerColumnCheckboxChange = (value: string) => {
     //     setselectedDetectBadDataPercentagePerColumnCheckbox(value);
@@ -98,29 +102,63 @@ const UserConfigurationInterface : React.FC = () => {
         event.preventDefault();
 
         setDisableApplyCleaningButton(true);
-
-        
-
         
         // Parse the changeDataTypesText into a JSON object
-        let changeDataTypes = {};
+        const changeDataTypes: { [key: string]: { [key: string]: string } } = {};
         let hasError = false;
-        if (selectedChangeDataTypesCheckbox === "yes"){
-            changeDataTypes = changeDataTypesText.split(',').reduce((acc, item) => {
-                const [key, value] = item.split(':').map(str => str.trim());
-                if (!columnNames.includes(key) || !dataTypesOptions.includes(value)) {
-                    const error = `Invalid column name or data type: ${key}, ${value}`;
+
+        //Split the input into file entries (for each file)
+        if(selectedChangeDataTypesCheckbox === "yes"){
+            const fileEntries = changeDataTypesText.split('.');
+            console.log("fileEntries:", fileEntries)
+
+            //Iterate through each file entry to validate it 
+            fileEntries.forEach((fileEntry) => {
+                const [filename, columnsStr] = fileEntry.split('|').map(str => str.trim());
+                if (!fileNames.map(name => name.trim()).includes(filename.trim())) {
+                    const error = `Invalid filename: ${filename}`;
                     console.error(error);
                     setErrorMessage(error);
                     hasError = true;
-                    return acc; 
+                    return;
                 }
-                if (key && value) {
-                    acc[key] = value;
+                if (!columnsStr) {
+                    const error = `No columns specified for ${filename}.`;
+                    console.error(error);
+                    setErrorMessage(error);
+                    hasError = true;
+                    return;
                 }
-                return acc;
-            }, {} as { [key: string]: string });
-        }
+                 // Split the columns and types, and validate each column and type
+                const columnsAndTypes = columnsStr.split(',').map(col => col.trim());
+                columnsAndTypes.forEach((columnAndType) => {
+                    const [columnName, columnType] = columnAndType.split(':').map(str => str.trim());               
+                
+                    // Check if the column exists in the specific file's columns
+                    if (!columnNamesDict[filename].includes(columnName)) {
+                        const error = `Invalid column name: "${columnName}" for file "${filename}".`;
+                        console.error(error);
+                        setErrorMessage(error);
+                        hasError = true;
+                        return;
+                    }
+                
+                    // Check if the data type is valid
+                    if (!dataTypesOptions.includes(columnType)) {
+                        const error = `Invalid data type: "${columnType}" for column "${columnName}".`;
+                        console.error(error);
+                        setErrorMessage(error);
+                        hasError = true;
+                        return;
+                    }
+
+                    // Store in changeDataTypes object
+                    if (!changeDataTypes[filename]) {
+                        changeDataTypes[filename] = {};
+                    }
+                    changeDataTypes[filename][columnName] = columnType;
+                });
+            })}
         
         if (hasError) {
             setDisableApplyCleaningButton(false);
@@ -131,7 +169,7 @@ const UserConfigurationInterface : React.FC = () => {
         const formData = {
             removeDuplicates: selectedRemoveDuplicatesCheckbox,
             removeRowsWithNullValues: selectedRemoveRowsWithNullsCheckbox,
-            ignoreIndexColumns: selectedIgnoreIndexColumnsCheckbox,
+            // ignoreIndexColumns: selectedIgnoreIndexColumnsCheckbox,
             // detectBadDataPercentagePerColumn: selectedDetectBadDataPercentagePerColumnCheckbox,
             changeColumnDataTypes: selectedChangeDataTypesCheckbox,
             changeDataTypes: selectedChangeDataTypesCheckbox === "yes" ? changeDataTypes : {}
@@ -145,14 +183,14 @@ const UserConfigurationInterface : React.FC = () => {
 
     const handleYesButtonClicked = async() => {
         try{
-            const response = await axios.post("http://localhost:5000/saveCleanedFile", userConfigs, {
+            const response = await axios.post("http://localhost:5000/saveCleanedFiles", userConfigs, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
             if(response.status === 200){
-                setSaveMessage("File saved successfully");
-                console.log("UserConfigurationInterface: File saved successfully");
+                setSaveMessage("File(s) saved successfully");
+                console.log("UserConfigurationInterface: File(s) saved successfully");
             }
         }
         catch (error) {
@@ -188,13 +226,13 @@ const UserConfigurationInterface : React.FC = () => {
                     <label>Yes</label>
                     <input type='checkbox' name='removeRowsWithNullsYes' id='removeRowsWithNullsYes' checked={selectedRemoveRowsWithNullsCheckbox === "yes"} onChange={() => handleRemoveRowsWithNullsCheckboxChange("yes")}/>
                 </div>
-                <div className='container'>
+                {/* <div className='container'>
                     <p>Ignore Index Columns</p>
                     <label>No</label>
                     <input type='checkbox' name='ignoreIndexColumnsNo' id='ignoreIndexColumnsNo' checked={selectedIgnoreIndexColumnsCheckbox === "no"} onChange={() => handleIgnoreIndexColumnsCheckboxChange("no")}/>
                     <label>Yes</label>
                     <input type='checkbox' name='ignoreIndexColumnsYes' id='ignoreIndexColumnsYes' checked={selectedIgnoreIndexColumnsCheckbox === "yes"} onChange={() => handleIgnoreIndexColumnsCheckboxChange("yes")}/>
-                </div>
+                </div> */}
                 {/* <div>
                     <p>Detect bad data percentage per column</p>
                     <label>No</label>
@@ -211,7 +249,10 @@ const UserConfigurationInterface : React.FC = () => {
                     {selectedChangeDataTypesCheckbox === "yes" ? 
                     <div>
                         <p className='important-info'>The following data types you can change your columns to are: int, float, object, bool, datetime</p>
-                        <p className='important-info'>Enter the Columns whose data type you will like to change along with the specified datatypes and please split them by a comma(,) e.g Name: object, Time: datetime64</p>
+                        <p className='important-info'>Please enter the filenames along with the columns whose data types you would like to change</p>
+                        <p className='important-info'>Use the following format:</p>
+                        <p className='important-info'>filename | column1:datatype, column2:datatype, column3:datatype</p>
+                        <p className='important-info'>e.g titanic | Age:float, PassengerId:int, Fare:float. employees | Salary:int, JoinDate:string, Department:string</p>
                         <input type='text' name='changeDataTypesText' id='changeDataTypesText' placeholder='Enter the column name with the datatype' value={changeDataTypesText} onChange={handleChangeDataTypesText}/>
                     </div> : null}
                 </div>
@@ -225,7 +266,7 @@ const UserConfigurationInterface : React.FC = () => {
             (userConfigs!==null && disableApplyCleaningButton ) && <div className="">
                 <ModifiedCSVPreviewDisplay userConfigs={userConfigs}/>
                 <div className='container'>
-                    {tableNamesFromDB.includes(fileName) ? 
+                    {fileNames.some((file) => tableNamesFromDB.includes(file)) ? 
                     <div className='container'>
                         <p>File already exists in the database, do you want to overwrite it?</p>
                         <button type="button" onClick={handleYesButtonClicked} >Yes</button>
