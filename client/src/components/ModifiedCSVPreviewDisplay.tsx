@@ -81,7 +81,9 @@ const ModifiedCSVPreviewDisplay: React.FC<ModifiedCSVPreviewDisplayProps> = ({us
                                         {filePreview.data.map((row: any[], rowIndex: number) => (
                                             <tr key={rowIndex}>
                                                 {row.map((cell: any, cellIndex: number) => (
-                                                    <td key={cellIndex}>{cell}</td>
+                                                    <td key={cellIndex}>
+                                                        {cell === true ? "true" : cell === false ? "false" : cell}
+                                                    </td>
                                                 ))}
                                             </tr>
                                         ))}
