@@ -1,26 +1,22 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from "react-dropzone"
 import DropDownMenu from '../components/DropDownMenu'
+import ColumnProperties from '../components/ColumnProperties'
 import "./Upload.css"
 import axios from 'axios';
 
 const Upload : React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileType, setFileType] = useState<string>("csv");
-  const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadStatus, setUploadStatus] = useState<string>("");
-  const [columnSummaries, setColumnSummaries] = useState<string[][]>([]);
   const [disableUploadButton, setDisableUploadButton] = useState<boolean>(true);
-  const [enableDisplayColumnSummaryButton, setEnableDisplayColumnSummaryButton] = useState<boolean>(true);
 
   //Function to handle file selection
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(acceptedFiles)
     setUploadStatus("");
-    setColumnSummaries([]);
     if (acceptedFiles.length > 0){
       setDisableUploadButton(false);
-      setEnableDisplayColumnSummaryButton(true);
     }
   }, [])
 
@@ -58,28 +54,6 @@ const Upload : React.FC = () => {
     }
   };
 
-  const handleDisplayColumnSummary = async() => {
-    try{
-      const response = await axios.get("http://localhost:5000/getColumnDataTypesWithTheirBadDataPercentage");
-      if(response.status === 200){
-        setColumnSummaries(response.data);
-        setEnableDisplayColumnSummaryButton(false);
-      }
-      try{
-        const response = await axios.get("http://localhost:5000/getFileNames");
-        if(response.status === 200){
-          setFileNames(response.data);
-        }
-      }
-      catch (error) {
-        console.error("Error fetching column types:", error);
-      }
-    }
-    catch (error) {
-      console.error("Error fetching column types:", error);
-    }
-  }
-
   const handleUserConfigurationInterface = () => {
     window.location.href = '/user-configuration-interface';
   }
@@ -107,22 +81,7 @@ const Upload : React.FC = () => {
           </ul>
       </div>
       <p className="upload-status">{uploadStatus}</p>
-      {uploadStatus === "File(s) upload successful" ? <button onClick={handleDisplayColumnSummary} disabled={!enableDisplayColumnSummaryButton} className="display-column-summary-button">Display Column Summary</button> : null}
-      {columnSummaries.length > 0 ? <div>
-        <h2>Column Data Types with Bad Data Percentage</h2>
-        <div>
-          {columnSummaries.map((columnSummary, fileIndex) => (
-            <div key={fileIndex}>
-              <h3>File : {fileNames[fileIndex]}</h3>
-              <ul>
-                {columnSummary.map((column, index) => (
-                  <li key={index}>{column}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div> : null}
+      {uploadStatus === "File(s) upload successful" ? <ColumnProperties /> : null}
       { uploadStatus === "File(s) upload successful" ? <div>
         <button type='button' onClick={handleUserConfigurationInterface}>Go to User Configuration Interface</button>
       </div> : null}

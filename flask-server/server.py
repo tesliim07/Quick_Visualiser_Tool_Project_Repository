@@ -8,7 +8,7 @@ import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
-from dataCleaning import changeColumnDataTypes, getColumnSummary
+from dataHandling import changeColumnDataTypes, get_column_properties, get_uploaded_files, get_file_names
 from visualisations import generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_histogram_urls, generate_time_plots_urls
 from schemaGenerator import generate_create_table_sql
 import psycopg2
@@ -35,52 +35,21 @@ class UploadFileForm(FlaskForm):
     file = FileField('File', validators=[InputRequired()])
     submit = SubmitField('Upload File')
 
-
 @app.route('/uploadFiles', methods=['POST'])
 def uploadFiles():
     if 'files' not in request.files:
         return 'No files part in request', 400
     files = request.files.getlist('files')
-    global uploaded_files
-    uploaded_files = []
-    for file in files:
-        if file.filename == '':
-            continue
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filepath)
-        uploaded_files.append(filepath)
-       
-    return f"{uploaded_files} uploaded successfully", 200
+    get_files = get_uploaded_files(files)
+    return f"{get_files} uploaded successfully", 200
 
 @app.route('/getFileNames', methods=['GET'])
 def getFileNames():
-    global uploaded_files
-    filenames = []
-    if len(uploaded_files) == 0:
-        return 'No file uploaded', 400
-    for file in uploaded_files:
-        filename = os.path.basename(file).split('.')[0]
-        lowercase_filename = filename.lower()
-        filenames.append(lowercase_filename)
+    filenames = get_file_names()
     return filenames, 200
 
-@app.route('/getColumnDataTypes', methods=['GET'])
-def getColumnDataTypes():
-    global uploaded_file_path
-    if uploaded_file_path is None:
-        return 'No file uploaded', 400
-    # Extract the column data types
-    try:
-        with open(uploaded_file_path, "rb") as file:
-            result = chardet.detect(file.read())
-            encoding_result = result.get('encoding')
-        
-        df = pd.read_csv(uploaded_file_path, encoding=encoding_result)
-        column_data_types = df.dtypes.to_string()
-        print(column_data_types)
-        return column_data_types, 200
-    except Exception as e:
-        return f'An error occurred while processing the file: {str(e)}', 500
+
+    
 
 @app.route('/getColumnNames', methods=['GET'])
 def getColumnNames():
@@ -104,27 +73,15 @@ def getColumnNames():
         return f'An error occurred while processing the file: {str(e)}', 500
 
 
-@app.route('/getColumnDataTypesWithTheirBadDataPercentage', methods=['GET'])
-def getColumnDataTypesWithTheirBadDataPercentage():
-    global uploaded_files
-    column_summaries = []
-    if len(uploaded_files) == 0:
-        return 'No file uploaded', 400
-    
+@app.route('/getColumnProperties', methods=['GET'])
+def getColumnProperties(): 
     try:
-        for each_file in uploaded_files:
-            app.logger.info('Uploading file: ' + each_file)
-            with open(each_file, "rb") as file:
-                result = chardet.detect(file.read())
-                encoding_result = result.get('encoding')
-            
-            df = pd.read_csv(each_file, encoding=encoding_result)
-            column_summary = getColumnSummary(df)
-            column_summaries.append(column_summary)
-        return column_summaries, 200
+        column_properties = get_column_properties()
+        return column_properties, 200
     except Exception as e:
         return f'An error occurred while processing the file: {str(e)}', 500
-
+    
+    
 @app.route('/userConfigs', methods=['POST'])
 def userConfigs():
     global uploaded_files
