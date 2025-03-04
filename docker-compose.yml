@@ -38,6 +38,8 @@ services:
       - "5000:5000"
     volumes:
       - ./flask-server/uploadedFiles:/app/uploadedFiles
+      - ./flask-server/modifiedFiles:/app/modifiedFiles
+      - ./flask-server/static/histogramVisualisations:/app/static/histogramVisualisations
     depends_on:
       - postgres
 

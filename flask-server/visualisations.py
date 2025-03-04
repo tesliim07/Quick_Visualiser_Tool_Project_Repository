@@ -4,8 +4,82 @@ import os
 import plotly.express as px
 import base64
 from io import BytesIO
+import chardet
+import pandas as pd
+import logging
+from flask import Flask
 
+app = Flask(__name__)
 html_dir = "static/Visualisations"
+histogram_dir = "static/histogramVisualisations"
+modified_files_path = "./modifiedFiles"
+
+def generate_histogram_urls(fileName):
+    file_path = os.path.join(modified_files_path, f'./modified_{fileName}.csv')
+    if not os.path.exists(file_path):
+        for file in os.listdir(histogram_dir):
+            file_path = os.path.join(histogram_dir, file)  # Get full file path
+            if os.path.isfile(file_path):  # Ensure it's a file, not a directory
+                os.remove(file_path)
+                app.logger.info('Removed file: ' + file)
+        html_list = []
+        file_path = f'./uploadedFiles/{fileName}.csv'
+        if os.path.exists(file_path):    
+            with open(file_path, "rb") as file:
+                result = chardet.detect(file.read())
+                encoding_result = result.get('encoding')
+                df = pd.read_csv(file_path, encoding=encoding_result)
+                numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
+                for column_name in numerical_columns:
+                    # Histogram for numerical variables
+                    fig = px.histogram(df, x=column_name, title=f"Histogram of {column_name}")
+                    fig.update_layout(
+                        xaxis_title=column_name,
+                        yaxis_title="Frequency",
+                        title_x=0.5  # Center the title
+                    )
+                
+                    html_file_path = os.path.join(histogram_dir, f"histogram_{column_name}.html")
+                    fig.write_html(html_file_path)
+                    app.logger.info(f'FilesURLpath: {html_file_path}')
+                    
+                    #html_url = f"/static/histogramVisualisations/histogram_{column_name}.html"
+                    html_list.append(f'/{html_file_path}')
+        else:
+            return 'File not uploaded yet'       
+    else:
+        with open(file_path, "rb") as file:
+            result = chardet.detect(file.read())
+            encoding_result = result.get('encoding')
+            df = pd.read_csv(file_path, encoding=encoding_result)
+            html_list = []
+            numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
+            for column_name in numerical_columns:
+                # Histogram for numerical variables
+                fig = px.histogram(df, x=column_name, title=f"Histogram of {column_name}")
+                fig.update_layout(
+                    xaxis_title=column_name,
+                    yaxis_title="Frequency",
+                    title_x=0.5  # Center the title
+                )
+            
+                html_file_path = os.path.join(histogram_dir, f"histogram_{column_name}.html")
+                fig.write_html(html_file_path)
+                
+                #html_url = f"/static/histogramVisualisations/histogram_{column_name}.html"
+                html_list.append(f'/{html_file_path}')
+    
+    return html_list
+
+
+
+
+
+
+
+
+
+
 
 def generate_correlation_heatmap(df):
     # Create heatmap
@@ -186,7 +260,6 @@ def generate_time_plots(df, time_columns):
 
 
 
-
 def generate_correlation_heatmap_url(df):
     numerical_df = df.select_dtypes(include=['number'])
     # Create Correlation Heatmap (r)
@@ -250,25 +323,25 @@ def generate_box_plot_url(df):
     
     return f"/static/Visualisations/box_plot.html"
 
-def generate_histogram_urls(df):
-    html_list = []
-    numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
-    for column_name in numerical_columns:
-        # Histogram for numerical variables
-        fig = px.histogram(df, x=column_name, title=f"Histogram of {column_name}")
-        fig.update_layout(
-            xaxis_title=column_name,
-            yaxis_title="Frequency",
-            title_x=0.5  # Center the title
-        )
+# def generate_histogram_urls(df):
+#     html_list = []
+#     numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
+#     for column_name in numerical_columns:
+#         # Histogram for numerical variables
+#         fig = px.histogram(df, x=column_name, title=f"Histogram of {column_name}")
+#         fig.update_layout(
+#             xaxis_title=column_name,
+#             yaxis_title="Frequency",
+#             title_x=0.5  # Center the title
+#         )
     
-        html_file_path = os.path.join(html_dir, f"histogram_{column_name}.html")
-        fig.write_html(html_file_path)
+#         html_file_path = os.path.join(html_dir, f"histogram_{column_name}.html")
+#         fig.write_html(html_file_path)
         
-        html_url = f"/static/Visualisations/histogram_{column_name}.html"
-        html_list.append(html_url)
+#         html_url = f"/static/Visualisations/histogram_{column_name}.html"
+#         html_list.append(html_url)
     
-    return html_list
+#     return html_list
 
 def generate_bar_plots_urls(df):
     html_list = []

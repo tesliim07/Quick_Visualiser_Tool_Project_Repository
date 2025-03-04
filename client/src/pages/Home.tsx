@@ -1,5 +1,5 @@
 import React from 'react';
-import './Home.css';
+import './HomePage.css';
 
 const Home: React.FC = () => {
 

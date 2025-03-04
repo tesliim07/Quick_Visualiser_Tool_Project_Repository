@@ -1,0 +1,27 @@
+.container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+    display: "flex";
+}
+
+.button-dataset {
+    margin: 0px 10px 10px 10px;
+    text-align: center;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.button-dataset:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .button-dataset:hover:not(:disabled) {
+    background-color: #0056b3;
+  }

@@ -8,8 +8,8 @@ import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
-from dataHandling import changeColumnDataTypes, get_column_properties, get_uploaded_files, get_file_names
-from visualisations import generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_histogram_urls, generate_time_plots_urls
+from dataHandling import changeColumnDataTypes, get_column_properties, get_uploaded_files, get_file_names, get_fields_properties, remove_nulls_in_column
+from visualisations import generate_histogram_urls, generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_time_plots_urls
 from schemaGenerator import generate_create_table_sql
 import psycopg2
 from sqlalchemy import create_engine, text
@@ -20,6 +20,7 @@ app = Flask(__name__)
 CORS(app) #Enable CORS for all routes
 
 app.config['UPLOAD_FOLDER'] = './uploadedFiles'
+# app.config['MODIFIED_FOLDER'] = './modifiedFiles'
 
 engine = create_engine('postgresql://QuickVisualiserToolUser:securepostgres@postgres:5432/QuickVisualiserToolDatabase')
 
@@ -47,9 +48,6 @@ def uploadFiles():
 def getFileNames():
     filenames = get_file_names()
     return filenames, 200
-
-
-    
 
 @app.route('/getColumnNames', methods=['GET'])
 def getColumnNames():
@@ -80,7 +78,36 @@ def getColumnProperties():
         return column_properties, 200
     except Exception as e:
         return f'An error occurred while processing the file: {str(e)}', 500
+
+@app.route('/getFieldsProperties/<string:fileName>', methods=['GET'])
+def getFieldsProperties(fileName):
+    try:
+       fields_properties = get_fields_properties(fileName)
+       return fields_properties, 200 
+    except Exception as e:
+        return f'An error occurred while getting field properties of {fileName}: {str(e)}', 500
     
+@app.route('/removeNulls', methods=['POST'])
+def removeNulls():
+    try:
+        data = request.get_json()
+        fileName = data.get("file_name")
+        columnName = data.get("column_name")
+        
+        if not fileName or not columnName:
+            return f'error: Missing fileName or columnName', 400
+        removeNullValues = remove_nulls_in_column(fileName, columnName)
+        return removeNullValues, 200
+    except Exception as e:
+        return f'An error occurred while removing null values: {str(e)}', 500
+    
+@app.route('/getHistogramUrl/<string:fileName>', methods=['GET'])
+def getHistogramUrl(fileName):
+    try:
+        histogram_urls = generate_histogram_urls(fileName)
+        return histogram_urls, 200
+    except Exception as e:
+        return f'An error occurred while generating the histogram: {str(e)}', 500
     
 @app.route('/userConfigs', methods=['POST'])
 def userConfigs():

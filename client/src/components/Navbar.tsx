@@ -13,6 +13,9 @@ const Navbar : React.FC = () => {
                     <NavLink to="/upload">Upload Page</NavLink>
                 </li>
                 <li>
+                    <NavLink to="/view-datasets">View Datasets Page</NavLink>
+                </li>
+                <li>
                     <NavLink to="/user-configuration-interface">User Configuration Page</NavLink>
                 </li>
                 <li>
