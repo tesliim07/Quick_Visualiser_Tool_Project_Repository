@@ -40,6 +40,7 @@ services:
       - ./flask-server/uploadedFiles:/app/uploadedFiles
       - ./flask-server/modifiedFiles:/app/modifiedFiles
       - ./flask-server/static/histogramVisualisations:/app/static/histogramVisualisations
+      - ./flask-server/static/correlationVisualisations:/app/static/correlationVisualisations
     depends_on:
       - postgres
 

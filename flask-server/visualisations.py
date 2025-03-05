@@ -12,6 +12,7 @@ from flask import Flask
 app = Flask(__name__)
 html_dir = "static/Visualisations"
 histogram_dir = "static/histogramVisualisations"
+correlation_dir = "static/correlationVisualisations"
 modified_files_path = "./modifiedFiles"
 
 def generate_histogram_urls(fileName):
@@ -72,10 +73,87 @@ def generate_histogram_urls(fileName):
     return html_list
 
 
-
-
-
-
+def generate_correlation_urls(fileName):
+    file_path = os.path.join(modified_files_path, f'./modified_{fileName}.csv')
+    if not os.path.exists(file_path):
+        for file in os.listdir(correlation_dir):
+            file_path = os.path.join(correlation_dir, file)  # Get full file path
+            if os.path.isfile(file_path):  # Ensure it's a file, not a directory
+                os.remove(file_path)
+                app.logger.info('Removed file: ' + file)
+        file_path = f'./uploadedFiles/{fileName}.csv'
+        if os.path.exists(file_path):    
+            app.logger.info('Fucker')
+            with open(file_path, "rb") as file:
+                result = chardet.detect(file.read())
+                encoding_result = result.get('encoding')
+                df = pd.read_csv(file_path, encoding=encoding_result)
+                numerical_df = df.select_dtypes(include=['number'])
+                correlation_matrix = numerical_df.corr()
+                correlation_matrix = correlation_matrix ** 2
+                
+                fig_corr = px.imshow(
+                     numerical_df.corr(),
+                    text_auto=True,
+                    title='Correlation Heatmap (r)',
+                    color_continuous_scale='RdBu_r',
+                    aspect='auto'
+                )
+                fig_corr_square = px.imshow(
+                    correlation_matrix,
+                    text_auto=True,
+                    title='Correlation Heatmap (r²)',
+                    color_continuous_scale='RdBu_r',
+                    aspect='auto'
+                )
+  
+                fig_corr.update_layout(title_text="Correlation Heatmap(r)")
+                fig_corr_square.update_layout(title_text="Correlation Heatmap(r²)")
+                
+                html_file_path = os.path.join(correlation_dir, "correlation_heatmap_r.html")
+                html_file_path_square = os.path.join(correlation_dir, "correlation_heatmap_r².html")
+                fig_corr.write_html(html_file_path)
+                fig_corr_square.write_html(html_file_path_square)
+     
+                return [f'/{html_file_path}', f'/{html_file_path_square}']
+        else:
+            return 'File not uploaded yet'       
+    else:
+        with open(file_path, "rb") as file:
+            result = chardet.detect(file.read())
+            encoding_result = result.get('encoding')
+            df = pd.read_csv(file_path, encoding=encoding_result)
+            numerical_df = df.select_dtypes(include=['number'])
+            correlation_matrix = numerical_df.corr()
+            correlation_matrix = correlation_matrix ** 2
+            fig_corr = px.imshow(
+                numerical_df.corr(),
+                text_auto=True,
+                title='Correlation Heatmap (r)',
+                color_continuous_scale='RdBu_r',
+                aspect='auto'
+            )
+            fig_corr_square = px.imshow(
+                correlation_matrix,
+                text_auto=True,
+                title='Correlation Heatmap (r²)',
+                color_continuous_scale='RdBu_r',
+                aspect='auto'
+            )
+            
+            fig_corr.update_layout(title_text="Correlation Heatmap(r)")
+            fig_corr_square.update_layout(title_text="Correlation Heatmap(r²)")
+                
+            html_file_path = os.path.join(correlation_dir, "correlation_heatmap_r.html")
+            html_file_path_square = os.path.join(correlation_dir, "correlation_heatmap_r².html")
+            fig_corr.write_html(html_file_path)
+            fig_corr_square.write_html(html_file_path_square)
+                
+            return [f'/{html_file_path}', f'/{html_file_path_square}']
+        
+        
+        
+        
 
 
 
@@ -260,43 +338,43 @@ def generate_time_plots(df, time_columns):
 
 
 
-def generate_correlation_heatmap_url(df):
-    numerical_df = df.select_dtypes(include=['number'])
-    # Create Correlation Heatmap (r)
-    fig_corr = px.imshow(
-        numerical_df.corr(),
-        text_auto=True,
-        title='Correlation Heatmap (r)',
-        color_continuous_scale='RdBu_r',
-        aspect='auto'
-    )
-    fig_corr.update_layout(title_text="Correlation Heatmap(r)")
+# def generate_correlation_heatmap_url(df):
+#     numerical_df = df.select_dtypes(include=['number'])
+#     # Create Correlation Heatmap (r)
+#     fig_corr = px.imshow(
+#         numerical_df.corr(),
+#         text_auto=True,
+#         title='Correlation Heatmap (r)',
+#         color_continuous_scale='RdBu_r',
+#         aspect='auto'
+#     )
+#     fig_corr.update_layout(title_text="Correlation Heatmap(r)")
     
-    html_file_path = os.path.join(html_dir, "correlation_heatmap_r.html")
-    fig_corr.write_html(html_file_path)
+#     html_file_path = os.path.join(html_dir, "correlation_heatmap_r.html")
+#     fig_corr.write_html(html_file_path)
 
     
-    return f"/static/Visualisations/correlation_heatmap_r.html"
+#     return f"/static/Visualisations/correlation_heatmap_r.html"
     
-def generate_correlation_heatmap_squared_url(df):
-    numerical_df = df.select_dtypes(include=['number'])
-    correlation_matrix = numerical_df.corr()
-    correlation_matrix = correlation_matrix ** 2
+# def generate_correlation_heatmap_squared_url(df):
+#     numerical_df = df.select_dtypes(include=['number'])
+#     correlation_matrix = numerical_df.corr()
+#     correlation_matrix = correlation_matrix ** 2
 
-    # Create Correlation Heatmap (r²)
-    fig_corr = px.imshow(
-        correlation_matrix,
-        text_auto=True,
-        title='Correlation Heatmap (r²)',
-        color_continuous_scale='RdBu_r',
-        aspect='auto'
-    )
-    fig_corr.update_layout(title_text="Correlation Heatmap(r²)")
+#     # Create Correlation Heatmap (r²)
+#     fig_corr = px.imshow(
+#         correlation_matrix,
+#         text_auto=True,
+#         title='Correlation Heatmap (r²)',
+#         color_continuous_scale='RdBu_r',
+#         aspect='auto'
+#     )
+#     fig_corr.update_layout(title_text="Correlation Heatmap(r²)")
     
-    html_file_path = os.path.join(html_dir, "correlation_heatmap_r².html")
-    fig_corr.write_html(html_file_path)
+#     html_file_path = os.path.join(html_dir, "correlation_heatmap_r².html")
+#     fig_corr.write_html(html_file_path)
     
-    return f"/static/Visualisations/correlation_heatmap_r².html"
+#     return f"/static/Visualisations/correlation_heatmap_r².html"
 
 def generate_box_plot_url(df):
     numeric_df = df.select_dtypes(include=['number'])

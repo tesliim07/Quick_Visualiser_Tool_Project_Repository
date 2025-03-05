@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import axios from 'axios';
 import {useState, useEffect} from 'react';
+import ModifiedCSVPreviewDisplay from '../components/ModifiedCSVPreviewDisplay';
 import './DatasetPage.css';
 
 const DatasetPage : React.FC = () => {
@@ -10,6 +11,8 @@ const DatasetPage : React.FC = () => {
     const [isViewHistogramClicked, setIsViewHistogramClicked] = useState<boolean>(false);
 
     const [urls, setUrls] = useState<string[]>([]);
+
+    const [activityKey, setActivityKey] = useState(0);
     
     useEffect(() => {
         console.log("Current fileName:", fileName);  // Debugging log
@@ -29,7 +32,7 @@ const DatasetPage : React.FC = () => {
         const fetchHistogramUrls = async () => {
             console.log("Fetching histogram URLs for", fileName);
             try {
-                const response = await axios.get(`http://localhost:5000/getHistogramUrl/${fileName}`);
+                const response = await axios.get(`http://localhost:5000/getHistogramUrls/${fileName}`);
                 if (response.status === 200) {
                     console.log("Histogram URLs: " + response.data)
                     setUrls(response.data);
@@ -38,6 +41,15 @@ const DatasetPage : React.FC = () => {
                 console.error("Error fetching histogram URLs:", error);
             }
         };
+
+        const handleActivity = () => {
+            // Optionally throttle or debounce this if events fire too often.
+            setActivityKey((prev) => prev + 1);
+            console.log("Activity detected");
+          };
+
+        // Listen for any activity events you care about (click, mousemove, etc.)
+        window.addEventListener("click", handleActivity);
 
         fetchFieldProperties();
         fetchHistogramUrls();
@@ -97,6 +109,7 @@ const DatasetPage : React.FC = () => {
                     </li>
                 ))}
             </div>
+            { fileName ? <ModifiedCSVPreviewDisplay key={activityKey} file_name={fileName} /> : null}
         </div>
     );
 };

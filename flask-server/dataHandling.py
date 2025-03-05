@@ -141,6 +141,27 @@ def remove_nulls_in_column(fileName, columnName):
             
     return 'File not uploaded yet'
 
+
+def get_preview(fileName):
+    global uploaded_files
+    global modified_uploaded_file
+    if fileName not in str(modified_uploaded_file) or modified_uploaded_file is None:
+        for each_file in uploaded_files:
+            if fileName == os.path.basename(each_file).split('.')[0].lower():
+                with open(each_file, "rb") as file:
+                    result = chardet.detect(file.read())
+                    encoding_result = result.get('encoding')
+                df = pd.read_csv(each_file, encoding=encoding_result)
+                modified_uploaded_file = each_file
+                return df.fillna("NaN").head(15).to_dict(orient='records')
+        return 'File not uploaded yet'
+    else:
+        with open(modified_uploaded_file, "rb") as file:
+            result = chardet.detect(file.read())
+            encoding_result = result.get('encoding')
+        df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
+        return df.fillna("NaN").head(15).to_dict(orient='records')
+
     
 def read_csv(filepath, encoding_result):
     df = pd.read_csv(filepath, encoding=encoding_result)

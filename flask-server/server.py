@@ -8,8 +8,8 @@ import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
-from dataHandling import changeColumnDataTypes, get_column_properties, get_uploaded_files, get_file_names, get_fields_properties, remove_nulls_in_column
-from visualisations import generate_histogram_urls, generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_time_plots_urls
+from dataHandling import changeColumnDataTypes, get_column_properties, get_uploaded_files, get_file_names, get_fields_properties, remove_nulls_in_column, get_preview
+from visualisations import generate_histogram_urls, generate_correlation_urls, generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_correlation_heatmap_url, generate_correlation_heatmap_squared_url, generate_box_plot_url, generate_bar_plots_urls, generate_time_plots_urls
 from schemaGenerator import generate_create_table_sql
 import psycopg2
 from sqlalchemy import create_engine, text
@@ -101,13 +101,29 @@ def removeNulls():
     except Exception as e:
         return f'An error occurred while removing null values: {str(e)}', 500
     
-@app.route('/getHistogramUrl/<string:fileName>', methods=['GET'])
-def getHistogramUrl(fileName):
+@app.route('/getPreview/<string:fileName>', methods=['GET'])
+def getPreview(fileName):
+    try:
+        preview = get_preview(fileName)
+        return preview, 200
+    except Exception as e:
+        return f'An error occurred while getting the {fileName} preview: {str(e)}', 500
+    
+@app.route('/getHistogramUrls/<string:fileName>', methods=['GET'])
+def getHistogramUrls(fileName):
     try:
         histogram_urls = generate_histogram_urls(fileName)
         return histogram_urls, 200
     except Exception as e:
         return f'An error occurred while generating the histogram: {str(e)}', 500
+    
+@app.route('/getCorrelationUrls/<string:fileName>', methods=['GET'])
+def getCorrelationUrls(fileName):
+    try:
+        correlation_heatmap_urls = generate_correlation_urls(fileName)
+        return correlation_heatmap_urls, 200
+    except Exception as e:
+        return f'An error occurred while generating the correlation heatmap: {str(e)}', 500
     
 @app.route('/userConfigs', methods=['POST'])
 def userConfigs():
