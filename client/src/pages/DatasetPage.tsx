@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import axios from 'axios';
 import {useState, useEffect} from 'react';
 import ModifiedCSVPreviewDisplay from '../components/ModifiedCSVPreviewDisplay';
+import TableOperations from '../components/TableOperations';
+import PopUp from '../components/PopUp';
 import './DatasetPage.css';
 
 const DatasetPage : React.FC = () => {
@@ -9,7 +11,7 @@ const DatasetPage : React.FC = () => {
     const [fieldProperties, setFieldProperties] = useState<string[]>([]);
     const [isRemoveNullClicked, setIsRemoveNullClicked] = useState<boolean>(false);
     const [isViewHistogramClicked, setIsViewHistogramClicked] = useState<boolean>(false);
-
+    const [isRevertButtonClicked, setIsRevertButtonClicked] = useState<boolean>(false);
     const [urls, setUrls] = useState<string[]>([]);
 
     const [activityKey, setActivityKey] = useState(0);
@@ -88,6 +90,10 @@ const DatasetPage : React.FC = () => {
         }
     };
 
+    const handleNoButtonClick = () => {
+        window.location.reload();
+    };
+
 
     return(
         <div>
@@ -109,7 +115,13 @@ const DatasetPage : React.FC = () => {
                     </li>
                 ))}
             </div>
-            { fileName ? <ModifiedCSVPreviewDisplay key={activityKey} file_name={fileName} /> : null}
+            { fileName ? <div>
+                <ModifiedCSVPreviewDisplay key={activityKey} file_name={fileName} />
+                <TableOperations key={`table-${activityKey}`} file_name={fileName}/>
+            </div> : null}
+            <button onClick={() => setIsRevertButtonClicked(true)}> Revert to Original Dataset</button>
+            
+            {isRevertButtonClicked !== false && <PopUp isOpen={true} onNo={handleNoButtonClick} file_name={fileName}/>}
         </div>
     );
 };

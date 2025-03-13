@@ -76,13 +76,16 @@ const Upload : React.FC = () => {
         <h2>Files</h2>
           <ul>
             {files.map((file, index)=> (
-              <li key={index}>{file.name}</li>
+              <div key={index}>
+                <li>{file.name}</li>
+                <button disabled={uploadStatus === "File(s) upload successful" } className="remove-file-button" onClick={() => setFiles(files.filter((_, i) => i !== index))}>Remove</button>
+              </div>
             ))}
           </ul>
       </div>
       <p className="upload-status">{uploadStatus}</p>
       {uploadStatus === "File(s) upload successful" ? <ColumnProperties /> : null}
-      { uploadStatus === "File(s) upload successful" ? <div>
+      {uploadStatus === "File(s) upload successful" ? <div>
         <button type='button' onClick={handleUserConfigurationInterface}>Go to User Configuration Interface</button>
       </div> : null}
     </div>

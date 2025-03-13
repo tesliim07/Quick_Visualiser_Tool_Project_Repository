@@ -83,7 +83,6 @@ def generate_correlation_urls(fileName):
                 app.logger.info('Removed file: ' + file)
         file_path = f'./uploadedFiles/{fileName}.csv'
         if os.path.exists(file_path):    
-            app.logger.info('Fucker')
             with open(file_path, "rb") as file:
                 result = chardet.detect(file.read())
                 encoding_result = result.get('encoding')

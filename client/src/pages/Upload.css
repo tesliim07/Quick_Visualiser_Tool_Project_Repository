@@ -89,7 +89,7 @@
   }
 
   /* Display Column Summary Button */
-  .display-column-summary-button {
+  .remove-file-button {
     background-color: #007bff;
     color: white;
     border: none;
@@ -101,12 +101,12 @@
     transition: background-color 0.3s ease;
   }
   
-  .display-column-summary-button:disabled {
+  .remove-file-button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
   }
   
-  .display-column-summary-button:hover:not(:disabled) {
+  .remove-file-button:hover:not(:disabled) {
     background-color: #0056b3;
   }
   

@@ -21,6 +21,18 @@ const ViewDataSets : React.FC = () => {
 
         fetchFileNames();
     }, []);
+
+    const removeFile = async (fileName: string) => {
+        try {
+            const response = await axios.delete(`http://localhost:5000/removeFile/${fileName}`);
+            if (response.status === 200) {
+                console.log("File removed successfully");
+            }
+        } catch (error) {
+            console.error("Error removing file:", error);
+        }
+        window.location.reload();
+    }
     
     return (
         <div>
@@ -29,6 +41,7 @@ const ViewDataSets : React.FC = () => {
                 <div>
                     <li key ={fileName} style={{ margin: "0 auto", textAlign: "center" }}>
                         <Link to={`/dataset-page/${fileName}`}>{fileName}</Link>
+                        <button onClick={() => removeFile(fileName)}>Remove</button>
                     </li>
                 </div>
             ))}
