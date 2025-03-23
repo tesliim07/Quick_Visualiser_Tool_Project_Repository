@@ -22,6 +22,47 @@
     cursor: not-allowed;
   }
   
-  .button-dataset:hover:not(:disabled) {
+  /* .button-dataset:hover:not(:disabled) {
     background-color: #0056b3;
+  } */
+
+.histogram-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
   }
+
+.histogram-dataset:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+.histogram-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.revert-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  align-items: center;
+}
+
+.revert-button-container {
+  max-width: 300px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  text-align: center;
+  display: "flex";
+}

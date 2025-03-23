@@ -54,10 +54,6 @@ const Upload : React.FC = () => {
     }
   };
 
-  const handleUserConfigurationInterface = () => {
-    window.location.href = '/user-configuration-interface';
-  }
-
   return (
     <div className="upload-container">
       <h1>Upload your Dataset(s)</h1>
@@ -85,9 +81,6 @@ const Upload : React.FC = () => {
       </div>
       <p className="upload-status">{uploadStatus}</p>
       {uploadStatus === "File(s) upload successful" ? <ColumnProperties /> : null}
-      {uploadStatus === "File(s) upload successful" ? <div>
-        <button type='button' onClick={handleUserConfigurationInterface}>Go to User Configuration Interface</button>
-      </div> : null}
     </div>
   )
 }

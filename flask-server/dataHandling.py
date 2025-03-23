@@ -11,8 +11,10 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './uploadedFiles'
 app.config['MODIFIED_FOLDER'] = './modifiedFiles'
 modified_folder = app.config['MODIFIED_FOLDER']
+uploaded_folder = app.config['UPLOAD_FOLDER']
 # Global variable to store the uploaded file
 uploaded_files = []
+modified_files= set()
 uploaded_file = None
 modified_uploaded_file = None
 
@@ -23,13 +25,13 @@ app.logger.setLevel(logging.INFO)
 
 def get_uploaded_files(files):
     global uploaded_files
-    # uploaded_files = []
     for file in files:
         if file.filename == '':
             continue
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename.lower())
         file.save(filepath)
-        uploaded_files.append(filepath)
+        if filepath not in uploaded_files:
+            uploaded_files.append(filepath)
     return uploaded_files
     
 def get_file_names():
@@ -37,6 +39,7 @@ def get_file_names():
     filenames = []
     if len(uploaded_files) == 0:
         return 'No file uploaded', 400
+    app.logger.info('uploaded_files: ' + str(uploaded_files))
     for file in uploaded_files:
         filename = os.path.basename(file).split('.')[0]
         lowercase_filename = filename.lower()
@@ -53,10 +56,10 @@ def get_column_properties():
         app.logger.info('file: ' + each_file)
         table_name = os.path.splitext(os.path.basename(each_file))[0]
         with open(each_file, "rb") as file:
-            result = chardet.detect(file.read())
+            result = chardet.detect(file.read(10000))
             encoding_result = result.get('encoding')
-            
-        df = pd.read_csv(each_file, encoding=encoding_result)
+        df_iter = pd.read_csv(each_file, encoding=encoding_result, chunksize=10000)
+        df = pd.concat(df_iter, ignore_index=True)
         summary = [
             {
                 "column": col,
@@ -72,160 +75,97 @@ def get_column_properties():
     return column_summaries
 
 
-def get_fields_properties(fileName):
-    global uploaded_files
-    global modified_uploaded_file
-    global uploaded_file
-    
-    if modified_uploaded_file is None:
-        fields_properties_list = []
-        for each_file in uploaded_files:
-            app.logger.info(each_file)
-            if fileName == os.path.basename(each_file).split('.')[0].lower():
-                with open(each_file, "rb") as file:
-                    result = chardet.detect(file.read())
-                    encoding_result = result.get('encoding')
-                df = pd.read_csv(each_file, encoding=encoding_result)
-                for column in df.columns:
-                    field_property = [column, str(df[column].dtype), str(df[column].isna().any()), f'{df[column].isna().mean() * 100:.2f} %']
-                    fields_properties_list.append(field_property)
-                # modified_uploaded_file = each_file
-                uploaded_file = each_file
-                return fields_properties_list
-        return 'File not uploaded yet'
-        
-            
-    else:
-        with open(modified_uploaded_file, "rb") as file:
-        # with open(uploaded_file, "rb") as file:
-            result = chardet.detect(file.read())
-            encoding_result = result.get('encoding')
-        # df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
-        df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
-        fields_properties_list = []
-        for column in df.columns:
-            field_property = [column, str(df[column].dtype), str(df[column].isna().any()), f'{df[column].isna().mean() * 100:.2f} %']
-            fields_properties_list.append(field_property)
-        return fields_properties_list
-   
-# def get_fields_properties(fileName):
-#     global uploaded_files
-#     global modified_uploaded_file
-#     global uploaded_file
-    
-#     if fileName not in str(modified_uploaded_file) or modified_uploaded_file is None:
-#     # if fileName not in str(uploaded_file) or uploaded_file is None:
-#         for file in os.listdir(modified_folder):
-#             file_path = os.path.join(modified_folder, file)  # Get full file path
-#             if os.path.isfile(file_path):  # Ensure it's a file, not a directory
-#                 os.remove(file_path)
-#                 app.logger.info('Removed file: ' + file)
-#         fields_properties_list = []
-#         for each_file in uploaded_files:
-#             app.logger.info(each_file)
-#             if fileName == os.path.basename(each_file).split('.')[0].lower():
-#                 with open(each_file, "rb") as file:
-#                     result = chardet.detect(file.read())
-#                     encoding_result = result.get('encoding')
-#                 df = pd.read_csv(each_file, encoding=encoding_result)
-#                 for column in df.columns:
-#                     field_property = [column, str(df[column].dtype), str(df[column].isna().any()), f'{df[column].isna().mean() * 100:.2f} %']
-#                     fields_properties_list.append(field_property)
-#                 # modified_uploaded_file = each_file
-#                 uploaded_file = each_file
-#                 return fields_properties_list
-#         return 'File not uploaded yet'
-            
-#     else:
-#         with open(modified_uploaded_file, "rb") as file:
-#         # with open(uploaded_file, "rb") as file:
-#             result = chardet.detect(file.read())
-#             encoding_result = result.get('encoding')
-#         # df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
-#         df = pd.read_csv(uploaded_file, encoding=encoding_result)
-#         fields_properties_list = []
-#         for column in df.columns:
-#             field_property = [column, str(df[column].dtype), str(df[column].isna().any()), f'{df[column].isna().mean() * 100:.2f} %']
-#             fields_properties_list.append(field_property)
-#         return fields_properties_list
+def process_file_for_fields_properties(file_path):
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(10000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=30000)
+    df = pd.concat(df_iter, ignore_index=True)
+    dtypes = df.dtypes.astype(str) 
+    is_na_any = df.isna().any()
+    na_percentage = df.isna().mean() * 100 
+    fields_properties_list = [
+        [
+            column,
+            dtypes[column],
+            str(is_na_any[column]),
+            f"{na_percentage[column]:.2f} %"
+        ]
+        for column in df.columns
+    ]
+    return fields_properties_list
 
-def remove_nulls_in_column(fileName, columnName):
-    # global modified_uploaded_file
-    # global uploaded_file
-    global uploaded_files
-    global modified_uploaded_file
+def process_file_for_remove_nulls(fileName, file_path, columnName):
+    global modified_files
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(10000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
+    df = pd.concat(df_iter, ignore_index=True)
+    df = df.dropna(subset=[columnName])
+    modifiedFilepath = f"{modified_folder}/modified_{fileName}.csv"
+    app.logger.info(f'Process Remove Nulls, Saving modified file: {modifiedFilepath}')
+    df.to_csv(modifiedFilepath, index=False)
+    modified_files.add(modifiedFilepath)
+    return f'Null values removed successfully and saved to {modifiedFilepath}'
+
+def process_file_for_preview(file_path):
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(10000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
+    df = pd.concat(df_iter, ignore_index=True)
+    return df.fillna("NaN").head(15).to_dict(orient='records')
+
     
-    # if f'./modifiedFiles/modified_{fileName}.csv' != modified_uploaded_file:
-    if f'./modifiedFiles/modified_{fileName}.csv' != modified_uploaded_file:
-        for each_file in uploaded_files:
-            if fileName == os.path.basename(each_file).split('.')[0].lower():
-                with open(each_file, "rb") as file:
-                    result = chardet.detect(file.read())
-                    encoding_result = result.get('encoding')
-                df = pd.read_csv(each_file, encoding=encoding_result)
-                if columnName in df.columns:
-                    df = df.dropna(subset=[columnName])
-                    app.logger.info(f'File: {app.config["MODIFIED_FOLDER"]}')
-                    modifiedFilepath = os.path.join(app.config['MODIFIED_FOLDER'],f'modified_{fileName}.csv')
-                    df.to_csv(modifiedFilepath, index=False)
-                    modified_uploaded_file = modifiedFilepath
-                    return f'Null values removed successfully and saved to {modifiedFilepath}'
-                return 'Column not found'
-    else:
-        with open(modified_uploaded_file, "rb") as file:
-            result = chardet.detect(file.read())
-            encoding_result = result.get('encoding')
-            df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
-            if columnName in df.columns:
-                df = df.dropna(subset=[columnName])
-                app.logger.info(f'File: {app.config["MODIFIED_FOLDER"]}')
-                modifiedFilepath = os.path.join(app.config['MODIFIED_FOLDER'],f'modified_{fileName}.csv')
-                df.to_csv(modifiedFilepath, index=False)
-                modified_uploaded_file = modifiedFilepath
-                app.logger.info(f'modified_uploaded_file Remove nulls in column: {modified_uploaded_file}')
-                return f'Null values removed successfully and saved to {modifiedFilepath}'
-            return 'Column not found'
-            
+    
+def get_fields_properties(fileName):
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')    
+    app.logger.info(f'Fields Properties, modified_files: {str(modified_files)}')
+    app.logger.info(f'Fields Properties, modified_file_path: {modified_file_path}')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Fields Properties, Using modified file: {modified_file_path}')
+        return process_file_for_fields_properties(modified_file_path)
+    app.logger.info(f'Fields Properties, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_fields_properties(uploaded_file_path)
     return 'File not uploaded yet'
 
 
+def remove_nulls_in_column(fileName, columnName):
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Remove Nulls , Using modified file: {modified_file_path}')
+        return process_file_for_remove_nulls(fileName,modified_file_path, columnName)
+    app.logger.info(f'Remove Nulls, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_remove_nulls(fileName, uploaded_file_path, columnName) 
+    return 'File not uploaded yet'
+    
+     
 def get_preview(fileName):
-    global uploaded_files
-    global modified_uploaded_file
-    global uploaded_file
-    if fileName not in str(modified_uploaded_file) or modified_uploaded_file is None:
-        for each_file in uploaded_files:
-            if fileName == os.path.basename(each_file).split('.')[0].lower():
-                with open(each_file, "rb") as file:
-                    result = chardet.detect(file.read())
-                    encoding_result = result.get('encoding')
-                df = pd.read_csv(each_file, encoding=encoding_result)
-                # modified_uploaded_file = each_file
-                uploaded_file = each_file
-                return df.fillna("NaN").head(15).to_dict(orient='records')
-        return 'File not uploaded yet'
-    else:
-        with open(modified_uploaded_file, "rb") as file:
-            result = chardet.detect(file.read())
-            encoding_result = result.get('encoding')
-        df = pd.read_csv(modified_uploaded_file, encoding=encoding_result)
-        return df.fillna("NaN").head(15).to_dict(orient='records')
-
-
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Preview, Using modified file: {modified_file_path}')
+        return process_file_for_preview(modified_file_path)
+    app.logger.info(f'Preview, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_preview(uploaded_file_path)
+    return 'File not uploaded yet'
+    
 def delete_modified_dataset(fileName):
-    global modified_uploaded_file
-    app.logger.info('modified_uploaded_file Delete modified dataset: ' + str(modified_uploaded_file))
-    if fileName in str(modified_uploaded_file):
-        os.remove(modified_uploaded_file)
-        modified_uploaded_file = None
-        for file in os.listdir(modified_folder):
-            file_path = os.path.join(modified_folder, file)  # Get full file path
-            if os.path.isfile(file_path):  # Ensure it's a file, not a directory
-                os.remove(file_path)
-                app.logger.info('Removed file: ' + file)
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    if os.path.exists(modified_file_path):
+        os.remove(modified_file_path)
+        modified_files.remove(modified_file_path)
+        app.logger.info('Removed file: ' + modified_file_path)
         return 'Deleted successfully'
     return 'File not found'
-
+      
+     
 def delete_file_from_list(fileName):
     global uploaded_files
     file_path = f'./uploadedFiles/{fileName}.csv'
@@ -234,12 +174,8 @@ def delete_file_from_list(fileName):
         os.remove(file_path)
         return 'File removed successfully'
     else:
-        return 'File not found'
-
+        return 'File not found'     
     
-# def read_csv(filepath, encoding_result):
-#     df = pd.read_csv(filepath, encoding=encoding_result)
-#     return df
 
 
 # def ignoreIndexColumns(df):

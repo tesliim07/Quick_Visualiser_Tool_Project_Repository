@@ -41,6 +41,7 @@ services:
       - ./flask-server/modifiedFiles:/app/modifiedFiles
       - ./flask-server/static/histogramVisualisations:/app/static/histogramVisualisations
       - ./flask-server/static/correlationVisualisations:/app/static/correlationVisualisations
+      - ./flask-server/static/boxPlotVisualisations:/app/static/boxPlotVisualisations
     depends_on:
       - postgres
 

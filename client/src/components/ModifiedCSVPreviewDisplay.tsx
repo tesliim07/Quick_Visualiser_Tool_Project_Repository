@@ -106,26 +106,27 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const ModifiedCSVPreviewDisplay: React.FC<{ file_name: string }> = ({ file_name }) => {
+const ModifiedCSVPreviewDisplay: React.FC<{ triggerGetPreview: boolean, file_name: string }> = ({ triggerGetPreview, file_name }) => {
     const [modifiedCSVPreview, setModifiedCSVPreview] = useState<any[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchModifiedCSVPreview = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/getPreview/${file_name}`);
-                if (response.status === 200) {
-                    console.log("Fucking Fetched Data:",response.data);
-                    setModifiedCSVPreview(response.data);
-                }
-            } catch (error) {
-                console.error("Error displaying modified preview:", error);
-                setErrorMessage("Error displaying modified preview");
-            }
-        };
-
         fetchModifiedCSVPreview();
-    }, [file_name]);
+ 
+    }, [triggerGetPreview]);
+
+    const fetchModifiedCSVPreview = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5000/getPreview/${file_name}`);
+            if (response.status === 200) {
+                console.log("Fucking Fetched Data:",response.data);
+                setModifiedCSVPreview(response.data);
+            }
+        } catch (error) {
+            console.error("Error displaying modified preview:", error);
+            setErrorMessage("Error displaying modified preview");
+        }
+    };
 
     if (errorMessage) {
         return <p style={{ color: 'red' }}>{errorMessage}</p>;

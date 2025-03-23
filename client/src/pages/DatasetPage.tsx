@@ -13,50 +13,41 @@ const DatasetPage : React.FC = () => {
     const [isViewHistogramClicked, setIsViewHistogramClicked] = useState<boolean>(false);
     const [isRevertButtonClicked, setIsRevertButtonClicked] = useState<boolean>(false);
     const [urls, setUrls] = useState<string[]>([]);
-
-    const [activityKey, setActivityKey] = useState(0);
     
     useEffect(() => {
         console.log("Current fileName:", fileName);  // Debugging log
-        const fetchFieldProperties = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/getFieldsProperties/${fileName}`);
-                if (response.status === 200) {
-                    setFieldProperties(response.data);
-                    console.log("Dataset Page: " + response.data)
-                }
-            } catch (error) {
-                console.error("Error fetching file name:", error);
-            }
-        };
 
-
-        const fetchHistogramUrls = async () => {
-            console.log("Fetching histogram URLs for", fileName);
-            try {
-                const response = await axios.get(`http://localhost:5000/getHistogramUrls/${fileName}`);
-                if (response.status === 200) {
-                    console.log("Histogram URLs: " + response.data)
-                    setUrls(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching histogram URLs:", error);
-            }
-        };
-
-        const handleActivity = () => {
-            // Optionally throttle or debounce this if events fire too often.
-            setActivityKey((prev) => prev + 1);
-            console.log("Activity detected");
-          };
-
-        // Listen for any activity events you care about (click, mousemove, etc.)
-        window.addEventListener("click", handleActivity);
-
-        fetchFieldProperties();
+        fetchFieldProperties(); 
         fetchHistogramUrls();
 
-    }, [isRemoveNullClicked, isViewHistogramClicked, fileName]);
+
+    }, [isRemoveNullClicked, fileName]);
+
+    const fetchFieldProperties = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5000/getFieldsProperties/${fileName}`);
+            if (response.status === 200) {
+                setFieldProperties(response.data);
+                console.log("Dataset Page: " + response.data)
+            }
+        } catch (error) {
+            console.error("Error fetching file name:", error);
+        }
+    };
+
+
+    const fetchHistogramUrls = async () => {
+        console.log("Fetching histogram URLs for", fileName);
+        try {
+            const response = await axios.get(`http://localhost:5000/getHistogramUrls/${fileName}`);
+            if (response.status === 200) {
+                console.log("Histogram URLs: " + response.data)
+                setUrls(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching histogram URLs:", error);
+        }
+    };
 
     const handleRemoveNulls = async (columnName: string) => {
         try {
@@ -69,8 +60,11 @@ const DatasetPage : React.FC = () => {
                 }
             });
             if (response.status === 200) {
+                console.log("Remove nulls button has been clicked")
                 setIsRemoveNullClicked(!isRemoveNullClicked);
                 console.log("Nulls removed successfully")
+                console.log("response.data: ", response.data);
+                console.log("response.status: ", response.status);
             }
         } catch (error) {
             console.error("Error removing nulls:", error);
@@ -107,7 +101,7 @@ const DatasetPage : React.FC = () => {
                         {Array.isArray(fieldProperty) ? fieldProperty.join(", ") : fieldProperty}
                         <button className="button-dataset" disabled={(fieldProperty[2] == "False")} onClick = {() => handleRemoveNulls(fieldProperty[0])}>Remove Nulls</button>
                         <button 
-                        className="button-dataset" 
+                        className="histogram-button" 
                         disabled={(fieldProperty[1] == "object" || fieldProperty[1] == "bool") || fieldProperty[1].includes("datetime")}
                         onClick={() => handleViewHistogram(fieldProperty[0])}>
                             View Histogram
@@ -116,10 +110,12 @@ const DatasetPage : React.FC = () => {
                 ))}
             </div>
             { fileName ? <div>
-                <ModifiedCSVPreviewDisplay key={activityKey} file_name={fileName} />
-                <TableOperations key={`table-${activityKey}`} file_name={fileName}/>
+                <ModifiedCSVPreviewDisplay triggerGetPreview = {isRemoveNullClicked} file_name={fileName} />
+                <TableOperations triggerGetPreview = {isRemoveNullClicked} file_name={fileName}/>
             </div> : null}
-            <button onClick={() => setIsRevertButtonClicked(true)}> Revert to Original Dataset</button>
+            <div className="revert-button-container">
+                <button className="revert-button" onClick={() => setIsRevertButtonClicked(true)}> Revert to Original Dataset</button>
+            </div>
             
             {isRevertButtonClicked !== false && <PopUp isOpen={true} onNo={handleNoButtonClick} file_name={fileName}/>}
         </div>

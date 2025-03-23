@@ -3,16 +3,13 @@ from flask_wtf import FlaskForm
 from wtforms import FileField, SubmitField
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
-# from flask_sqlalchemy import SQLAlchemy
 import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
 from dataHandling import get_column_properties, get_uploaded_files, get_file_names, get_fields_properties, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
-from visualisations import generate_histogram_urls, generate_correlation_urls, generate_time_plots, generate_correlation_heatmap, generate_correlation_heatmap_squared, generate_box_plot, generate_bar_plots, generate_histogram, generate_box_plot_url, generate_bar_plots_urls, generate_time_plots_urls
-from schemaGenerator import generate_create_table_sql
-import psycopg2
-from sqlalchemy import create_engine, text
+from visualisations import generate_histogram_urls, generate_correlation_urls, generate_box_plot_url
+from sqlalchemy import create_engine
 import logging
 
 
@@ -20,12 +17,10 @@ app = Flask(__name__)
 CORS(app) #Enable CORS for all routes
 
 app.config['UPLOAD_FOLDER'] = './uploadedFiles'
-# app.config['MODIFIED_FOLDER'] = './modifiedFiles'
 
 engine = create_engine('postgresql://QuickVisualiserToolUser:securepostgres@postgres:5432/QuickVisualiserToolDatabase')
 
 # Global variable to store the uploaded file
-uploaded_file_path= None
 uploaded_files = []
 
 logging.basicConfig(level=logging.INFO)  # Ensures INFO logs are shown
@@ -140,6 +135,14 @@ def getCorrelationUrls(fileName):
         return correlation_heatmap_urls, 200
     except Exception as e:
         return f'An error occurred while generating the correlation heatmap: {str(e)}', 500
+    
+@app.route('/getBoxPlotUrl/<string:fileName>', methods=['GET'])
+def getBoxPlotUrl(fileName):
+    try:
+        box_plot_url = generate_box_plot_url(fileName)
+        return box_plot_url, 200
+    except Exception as e:
+        return f'An error occurred while generating the box plot: {str(e)}', 500
     
 
     
