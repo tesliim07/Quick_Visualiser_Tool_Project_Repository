@@ -7,7 +7,7 @@ import os
 from wtforms.validators import InputRequired
 import pandas as pd
 import chardet
-from dataHandling import get_column_properties, get_uploaded_files, get_file_names, get_fields_properties, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
+from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
 from visualisations import generate_histogram_urls, generate_correlation_urls, generate_box_plot_url
 from sqlalchemy import create_engine
 import logging
@@ -44,26 +44,31 @@ def getFileNames():
     filenames = get_file_names()
     return filenames, 200
 
-@app.route('/getColumnNames', methods=['GET'])
-def getColumnNames():
-    global uploaded_files
-    column_names_dict = {}
-    if len(uploaded_files) == 0:
-        return 'No files uploaded', 400
-    # Extract the column data types
-    try:
-        for each_file in uploaded_files:
-            with open(each_file, "rb") as file:
-                result = chardet.detect(file.read())
-                encoding_result = result.get('encoding')
+@app.route('/getFileInfos', methods=['GET'])
+def getFileInfos():
+    fileinfos = get_file_infos()
+    return fileinfos, 200
+
+# @app.route('/getColumnNames', methods=['GET'])
+# def getColumnNames():
+#     global uploaded_files
+#     column_names_dict = {}
+#     if len(uploaded_files) == 0:
+#         return 'No files uploaded', 400
+#     # Extract the column data types
+#     try:
+#         for each_file in uploaded_files:
+#             with open(each_file, "rb") as file:
+#                 result = chardet.detect(file.read())
+#                 encoding_result = result.get('encoding')
             
-            df = pd.read_csv(each_file, encoding=encoding_result)
-            column_names = df.columns.to_list()
-            filename = os.path.splitext(os.path.basename(each_file))[0].lower()
-            column_names_dict[filename] = column_names
-        return column_names_dict, 200
-    except Exception as e:
-        return f'An error occurred while processing the file: {str(e)}', 500
+#             df = pd.read_csv(each_file, encoding=encoding_result)
+#             column_names = df.columns.to_list()
+#             filename = os.path.splitext(os.path.basename(each_file))[0].lower()
+#             column_names_dict[filename] = column_names
+#         return column_names_dict, 200
+#     except Exception as e:
+#         return f'An error occurred while processing the file: {str(e)}', 500
 
 
 @app.route('/getColumnProperties', methods=['GET'])

@@ -13,6 +13,7 @@ const DatasetPage : React.FC = () => {
     const [isViewHistogramClicked, setIsViewHistogramClicked] = useState<boolean>(false);
     const [isRevertButtonClicked, setIsRevertButtonClicked] = useState<boolean>(false);
     const [urls, setUrls] = useState<string[]>([]);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     
     useEffect(() => {
         console.log("Current fileName:", fileName);  // Debugging log
@@ -32,6 +33,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching file name:", error);
+            setErrorMessage("Error fetching file name");
         }
     };
 
@@ -46,6 +48,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching histogram URLs:", error);
+            setErrorMessage("Error fetching histogram URLs");
         }
     };
 
@@ -68,6 +71,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error removing nulls:", error);
+            setErrorMessage("Error removing nulls");
         }
     }
 
@@ -83,6 +87,10 @@ const DatasetPage : React.FC = () => {
             console.log("Histogram URL not found for", fieldName);
         }
     };
+
+    if (errorMessage) {
+        return <p style={{ color: 'red' }}>{errorMessage}</p>;
+    }
 
     const handleNoButtonClick = () => {
         window.location.reload();

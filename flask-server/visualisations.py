@@ -21,7 +21,7 @@ app.logger.setLevel(logging.INFO)
 def process_file_for_histogram(file_path, subfolder_path):
     html_list = []
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
@@ -43,7 +43,7 @@ def process_file_for_histogram(file_path, subfolder_path):
 
 def process_file_for_correlation(file_path, subfolder_path):
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df = pd.read_csv(file_path, encoding=encoding_result)
     numerical_df = df.select_dtypes(include=['number'])
@@ -74,7 +74,7 @@ def process_file_for_correlation(file_path, subfolder_path):
 
 def process_file_for_box_plots(file_path, subfolder_path):
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df = pd.read_csv(file_path, encoding=encoding_result)
     numerical_df = df.select_dtypes(include=['number'])

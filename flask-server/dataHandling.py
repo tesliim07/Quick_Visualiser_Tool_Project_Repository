@@ -4,6 +4,7 @@ from flask import Flask, jsonify
 import os
 import chardet
 import logging
+from datetime import datetime
 
 
 
@@ -17,6 +18,7 @@ uploaded_files = []
 modified_files= set()
 uploaded_file = None
 modified_uploaded_file = None
+uploaded_times = []
 
 logging.basicConfig(level=logging.INFO)  # Ensures INFO logs are shown
 app.logger.setLevel(logging.INFO)
@@ -25,17 +27,21 @@ app.logger.setLevel(logging.INFO)
 
 def get_uploaded_files(files):
     global uploaded_files
+    global uploaded_times
     for file in files:
         if file.filename == '':
             continue
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename.lower())
         file.save(filepath)
+        upload_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        app.logger.info('Upload Time: ' + upload_time)
         if filepath not in uploaded_files:
             uploaded_files.append(filepath)
+            uploaded_times.append(f'{filepath};{upload_time}')
+    app.logger.info('uploaded_times: ' + str(uploaded_times))
     return uploaded_files
     
 def get_file_names():
-    global uploaded_files
     filenames = []
     if len(uploaded_files) == 0:
         return 'No file uploaded', 400
@@ -46,8 +52,26 @@ def get_file_names():
         filenames.append(lowercase_filename)
     return filenames
 
+def get_file_infos():
+    fileinfos = []
+    filename_upload_time = ''
+    
+    file_names = get_file_names()
+    for file_name in file_names:
+        uploaded_time = next((time for time in uploaded_times if file_name in time), None)
+        app.logger.info(f'Uploaded Time: {uploaded_time}')
+        if uploaded_time != None:
+            filename_upload_time = uploaded_time.split(';')[1]
+            app.logger.info(f'{file_name} filename_upload_time: ' + filename_upload_time)
+        
+        lowercase_filename = file_name
+        fileinfos.append(f'{lowercase_filename}; {filename_upload_time}')
+    return fileinfos
+
+
+
 def get_column_properties():
-    global uploaded_files 
+    # global uploaded_files 
     column_summaries = {}
     if len(uploaded_files) == 0:
         return 'No file uploaded'
@@ -56,7 +80,7 @@ def get_column_properties():
         app.logger.info('file: ' + each_file)
         table_name = os.path.splitext(os.path.basename(each_file))[0]
         with open(each_file, "rb") as file:
-            result = chardet.detect(file.read(10000))
+            result = chardet.detect(file.read(5000))
             encoding_result = result.get('encoding')
         df_iter = pd.read_csv(each_file, encoding=encoding_result, chunksize=10000)
         df = pd.concat(df_iter, ignore_index=True)
@@ -77,9 +101,9 @@ def get_column_properties():
 
 def process_file_for_fields_properties(file_path):
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
-    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=30000)
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
     dtypes = df.dtypes.astype(str) 
     is_na_any = df.isna().any()
@@ -98,7 +122,7 @@ def process_file_for_fields_properties(file_path):
 def process_file_for_remove_nulls(fileName, file_path, columnName):
     global modified_files
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
@@ -111,7 +135,7 @@ def process_file_for_remove_nulls(fileName, file_path, columnName):
 
 def process_file_for_preview(file_path):
     with open(file_path, "rb") as file:
-        result = chardet.detect(file.read(10000))
+        result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
