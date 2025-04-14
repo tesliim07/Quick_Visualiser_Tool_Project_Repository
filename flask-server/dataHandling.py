@@ -44,7 +44,7 @@ def get_uploaded_files(files):
 def get_file_names():
     filenames = []
     if len(uploaded_files) == 0:
-        return 'No file uploaded', 400
+        return []
     app.logger.info('uploaded_files: ' + str(uploaded_files))
     for file in uploaded_files:
         filename = os.path.basename(file).split('.')[0]
@@ -84,10 +84,12 @@ def get_column_properties():
             encoding_result = result.get('encoding')
         df_iter = pd.read_csv(each_file, encoding=encoding_result, chunksize=10000)
         df = pd.concat(df_iter, ignore_index=True)
+        summary = []
+        dtypes = df.dtypes.astype(str).replace({'object': 'string', 'int64': 'integer', 'float64': 'float'}) 
         summary = [
             {
                 "column": col,
-                "data_type": str(df[col].dtype),
+                "data_type": dtypes[col],
                 "bad_data": f"{df[col].isna().mean() * 100:.2f}%"
             }
             for col in df.columns
@@ -105,9 +107,9 @@ def process_file_for_fields_properties(file_path):
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
-    dtypes = df.dtypes.astype(str) 
+    dtypes = df.dtypes.astype(str).replace({'object': 'string', 'int64': 'integer', 'float64': 'float'}) 
     is_na_any = df.isna().any()
-    na_percentage = df.isna().mean() * 100 
+    na_percentage = df.isna().mean() * 100
     fields_properties_list = [
         [
             column,
@@ -139,9 +141,18 @@ def process_file_for_preview(file_path):
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
-    return df.fillna("NaN").head(15).to_dict(orient='records')
+    df = df.fillna("-").head(15)
+    for column in df.select_dtypes(include=['number']).columns:
+        df[column] = df[column].map(lambda x: f"{x:,}")
+    return df.to_dict(orient='records')
 
-    
+def process_file_for_number_of_rows_retrieval(file_path):
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(5000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
+    df = pd.concat(df_iter, ignore_index=True)
+    return f"{len(df):,}"
     
 def get_fields_properties(fileName):
     modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
@@ -154,6 +165,17 @@ def get_fields_properties(fileName):
     app.logger.info(f'Fields Properties, No modified file found, searching in uploaded files...')
     if uploaded_file_path in uploaded_files:
         return process_file_for_fields_properties(uploaded_file_path)
+    return 'File not uploaded yet'
+
+def get_number_of_rows(fileName):
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Get Number of Rows, Using modified file: {modified_file_path}')
+        return process_file_for_number_of_rows_retrieval(modified_file_path)
+    app.logger.info(f'Get Number of Rows, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_number_of_rows_retrieval(uploaded_file_path)
     return 'File not uploaded yet'
 
 

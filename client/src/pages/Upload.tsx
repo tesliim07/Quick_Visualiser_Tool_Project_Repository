@@ -10,12 +10,19 @@ const Upload : React.FC = () => {
   const [fileType, setFileType] = useState<string>("csv");
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [disableUploadButton, setDisableUploadButton] = useState<boolean>(true);
+  const maxFileSizeInMB = 21;
 
   //Function to handle file selection
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles(acceptedFiles)
+    const oversizedFiles = acceptedFiles.filter(file => file.size > maxFileSizeInMB * 1024 * 1024);
+    const validFiles = acceptedFiles.filter(file => file.size <= maxFileSizeInMB * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      const names = oversizedFiles.map(file => file.name).join(", ");
+      alert(`The following files are larger than ${maxFileSizeInMB}MB and won't be uploaded: ${names}`);
+    }
+    setFiles(validFiles)
     setUploadStatus("");
-    if (acceptedFiles.length > 0){
+    if (validFiles.length > 0){
       setDisableUploadButton(false);
     }
   }, [])
@@ -73,7 +80,7 @@ const Upload : React.FC = () => {
           <ul>
             {files.map((file, index)=> (
               <div key={index}>
-                <li>{file.name}</li>
+                <li>{file.name}  — {(file.size / (1024 * 1024)).toFixed(2)} MB</li>
                 <button disabled={uploadStatus === "File(s) upload successful" } className="remove-file-button" onClick={() => setFiles(files.filter((_, i) => i !== index))}>Remove</button>
               </div>
             ))}

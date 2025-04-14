@@ -6,11 +6,11 @@ import './TableOperations.css';
 const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string }> = ({ triggerGetPreview, file_name }) => {
 
     const [correlationUrls, setCorrelationUrls] = useState<any[]>([]);
-    const [boxPlotUrl, setBoxPlotUrl] = useState<any>();
+    // const [boxPlotUrl, setBoxPlotUrl] = useState<any>();
 
     useEffect(() => {
         fetchCorrelationUrls();
-        fetchBoxplotUrl();
+        // fetchBoxplotUrl();
     }
     , [triggerGetPreview]);
 
@@ -26,17 +26,17 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
         }
     }
 
-    const fetchBoxplotUrl = async () => {
-        try {
-            const response = await axios.get(`http://localhost:5000/getBoxPlotUrl/${file_name}`);
-            if (response.status === 200) {
-                console.log("Box Plot URL: " + response.data)
-                setBoxPlotUrl(response.data);
-            }
-        } catch (error) {
-            console.error("Error fetching correlation URLs:", error);
-        }
-    }
+    // const fetchBoxplotUrl = async () => {
+    //     try {
+    //         const response = await axios.get(`http://localhost:5000/getBoxPlotUrl/${file_name}`);
+    //         if (response.status === 200) {
+    //             console.log("Box Plot URL: " + response.data)
+    //             setBoxPlotUrl(response.data);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching correlation URLs:", error);
+    //     }
+    // }
     
     return(
         <div>
@@ -57,7 +57,7 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
                     );
                 })}
             
-                {boxPlotUrl && (
+                {/* {boxPlotUrl && (
                     <div>
                         <a
                             href={`http://localhost:5000${boxPlotUrl}`}
@@ -66,7 +66,7 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
                                 Box Plot
                         </a>
                     </div>
-                )}
+                )} */}
             </div>
         
         </div>

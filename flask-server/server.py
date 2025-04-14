@@ -6,9 +6,8 @@ from flask_cors import CORS
 import os
 from wtforms.validators import InputRequired
 import pandas as pd
-import chardet
-from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
-from visualisations import generate_histogram_urls, generate_correlation_urls, generate_box_plot_url
+from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, get_number_of_rows, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
+from visualisations import generate_histogram_urls, generate_bar_chart_urls,generate_correlation_urls, generate_box_plot_urls
 from sqlalchemy import create_engine
 import logging
 
@@ -42,6 +41,8 @@ def uploadFiles():
 @app.route('/getFileNames', methods=['GET'])
 def getFileNames():
     filenames = get_file_names()
+    if filenames == []:
+        return [], 400
     return filenames, 200
 
 @app.route('/getFileInfos', methods=['GET'])
@@ -87,6 +88,14 @@ def getFieldsProperties(fileName):
     except Exception as e:
         return f'An error occurred while getting field properties of {fileName}: {str(e)}', 500
     
+@app.route('/getNumberOfRows/<string:fileName>', methods=['GET'])
+def getNumberOfRows(fileName):
+    try:
+        number_of_rows = get_number_of_rows(fileName)
+        return number_of_rows, 200
+    except Exception as e:
+        return f'An error occurred while getting the number of rows: {str(e)}', 500
+    
 @app.route('/removeNulls', methods=['POST'])
 def removeNulls():
     try:
@@ -131,7 +140,15 @@ def getHistogramUrls(fileName):
         histogram_urls = generate_histogram_urls(fileName)
         return histogram_urls, 200
     except Exception as e:
-        return f'An error occurred while generating the histogram: {str(e)}', 500
+        return f'An error occurred while generating the histograms: {str(e)}', 500
+    
+@app.route('/getBarChartUrls/<string:fileName>', methods=['GET'])
+def getBarChartUrls(fileName):
+    try:
+        bar_chart_urls = generate_bar_chart_urls(fileName)
+        return bar_chart_urls, 200
+    except Exception as e:
+        return f'An error occurred while generating the bar charts: {str(e)}', 500
     
 @app.route('/getCorrelationUrls/<string:fileName>', methods=['GET'])
 def getCorrelationUrls(fileName):
@@ -141,13 +158,13 @@ def getCorrelationUrls(fileName):
     except Exception as e:
         return f'An error occurred while generating the correlation heatmap: {str(e)}', 500
     
-@app.route('/getBoxPlotUrl/<string:fileName>', methods=['GET'])
-def getBoxPlotUrl(fileName):
+@app.route('/getBoxPlotUrls/<string:fileName>', methods=['GET'])
+def getBoxPlotUrls(fileName):
     try:
-        box_plot_url = generate_box_plot_url(fileName)
-        return box_plot_url, 200
+        box_plot_urls = generate_box_plot_urls(fileName)
+        return box_plot_urls, 200
     except Exception as e:
-        return f'An error occurred while generating the box plot: {str(e)}', 500
+        return f'An error occurred while generating the box plots: {str(e)}', 500
     
 
     
@@ -307,47 +324,6 @@ def getBoxPlotUrl(fileName):
 #         return f'An error occurred while fetching the visualisations: {str(e)}', 500
 
 
-# @app.route('/getVisualisationImages/<string:fileName>', methods=['GET'])
-# def getVisualisationImages(fileName):
-#     try:
-#         with engine.connect() as conn:
-#             result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"))
-#             table_names = [row[0] for row in result]
-        
-#         if fileName.lower() in table_names:
-#             # If the table exists, perform the desired operations
-#             table_name = fileName.lower()
-#             with engine.connect() as conn:
-#                 df = pd.read_sql_table(table_name, conn)
-#                 correlation_heatmap_img = generate_correlation_heatmap(df)
-#                 app.logger.info(f"Generated correlation heatmap: {correlation_heatmap_img}")
-#                 correlation_heatmap_squared_img = generate_correlation_heatmap_squared(df)
-#                 visualisations = {
-#                     "correlation_heatmap_img": correlation_heatmap_img,
-#                     "correlation_heatmap_squared_img": correlation_heatmap_squared_img
-#                 }
-#                 app.logger.info(f"visualisations: {visualisations}")
-#                 time_columns = df.select_dtypes(include=['datetime']).columns.tolist()
-#                 if time_columns != []:
-#                     time_plots_imgs = generate_time_plots(df, time_columns)
-#                     visualisations["time_plots_imgs"] = time_plots_imgs
-#                 else:
-#                     histogram_imgs = generate_histogram(df)
-#                     box_plot_img = generate_box_plot(df)
-#                     bar_plot_imgs = generate_bar_plots(df)
-                    
-#                     visualisations["histogram_imgs"] = histogram_imgs
-#                     visualisations["box_plot_img"] = box_plot_img
-#                     visualisations["bar_plots_imgs"] = bar_plot_imgs
-                    
-#                 app.logger.info(visualisations)
-        
-#                 return jsonify(visualisations), 200
-#         else:
-#             return f'Table {fileName} does not exist in the database', 404
-#     except Exception as e:
-#         app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
-#         return f'An error occurred while fetching the visualisations: {str(e)}', 500
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
     
