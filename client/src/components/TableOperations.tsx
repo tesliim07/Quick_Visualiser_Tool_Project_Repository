@@ -6,11 +6,12 @@ import './TableOperations.css';
 const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string }> = ({ triggerGetPreview, file_name }) => {
 
     const [correlationUrls, setCorrelationUrls] = useState<any[]>([]);
-    // const [boxPlotUrl, setBoxPlotUrl] = useState<any>();
+    const [hasDuplicates, setHasDuplicates] = useState<boolean>(false);
+    const [isRemoveDuplicatesClicked, setIsRemoveDuplicatesClicked] = useState<boolean>(false);
 
     useEffect(() => {
         fetchCorrelationUrls();
-        // fetchBoxplotUrl();
+        fetchHasDuplicates();
     }
     , [triggerGetPreview]);
 
@@ -26,17 +27,41 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
         }
     }
 
-    // const fetchBoxplotUrl = async () => {
-    //     try {
-    //         const response = await axios.get(`http://localhost:5000/getBoxPlotUrl/${file_name}`);
-    //         if (response.status === 200) {
-    //             console.log("Box Plot URL: " + response.data)
-    //             setBoxPlotUrl(response.data);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error fetching correlation URLs:", error);
-    //     }
-    // }
+    const fetchHasDuplicates = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5000/hasDuplicates/${file_name}`);
+            if (response.status === 200) {
+                console.log("Has Duplicates: " + response.data)
+                if (response.data === "True") {
+                    setHasDuplicates(true);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching correlation URLs:", error);
+        }
+    }
+
+    const handleRemoveDuplicates = async () => {
+        try {
+            const response = await axios.post("http://localhost:5000/removeDuplicates", {
+                file_name: file_name
+            }, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            if (response.status === 200) {
+                console.log("Remove duplicates button has been clicked")
+                setIsRemoveDuplicatesClicked(!isRemoveDuplicatesClicked);
+                console.log("Nulls removed successfully")
+                console.log("response.data: ", response.data);
+                console.log("response.status: ", response.status);
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Error removing duplicates:", error);
+        }
+    }
     
     return(
         <div>
@@ -56,17 +81,11 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
                         </div>
                     );
                 })}
-            
-                {/* {boxPlotUrl && (
-                    <div>
-                        <a
-                            href={`http://localhost:5000${boxPlotUrl}`}
-                            target="_blank"
-                            rel="noreferrer">
-                                Box Plot
-                        </a>
-                    </div>
-                )} */}
+                <div className="">
+                    <button disabled={hasDuplicates === false} onClick={() => handleRemoveDuplicates()}>
+                        Remove Duplicates
+                    </button>
+                </div>
             </div>
         
         </div>

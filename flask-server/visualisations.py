@@ -20,6 +20,8 @@ logging.basicConfig(level=logging.INFO)  # Ensures INFO logs are shown
 app.logger.setLevel(logging.INFO)
 
 def process_file_for_histogram(file_path, subfolder_path):
+    app.logger.info(f'Process File for Histogram : Using file for histogram: {file_path}')
+    app.logger.info(f'Process File for Histogram : Using existing subfolder for histogram: {subfolder_path}')
     html_list = []
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
@@ -27,22 +29,32 @@ def process_file_for_histogram(file_path, subfolder_path):
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
     numerical_columns = df.select_dtypes(include=['number']).columns.to_list()
+    app.logger.info(f'Process File for Histogram : Numerical Columns: {numerical_columns}')
     for column_name in numerical_columns:
+        app.logger.info(f'Process File for Histogram : Column Name: {column_name}')
         # Histogram for numerical variables
         fig = px.histogram(df, x=column_name, title=f"Histogram of {column_name}")
+        app.logger.info(f'Process File for Histogram : Figure: {fig}')
         fig.update_layout(
             xaxis_title=column_name,
             yaxis_title="Frequency",
             title_x=0.5  # Center the title
         )
-        
+        app.logger.info(f'Process File for Histogram : Column Name2: {column_name}')
+        app.logger.info(f'Process File for Histogram : Figure2: {fig}')
         html_file_path = os.path.join(subfolder_path, f"histogram_{column_name}.html")
+        app.logger.info(f'Process File for Histogram : HTML File Path: {html_file_path}')
         fig.write_html(html_file_path)
+        app.logger.info(f'Process File for Histogram : HTML File Path: {html_file_path}')
             
         html_list.append(f'/{html_file_path}')
+    app.logger.info(f'Process File for Histogram : HTML List: {html_list}')
     return html_list
 
+
 def process_file_for_bar_chart(file_path, subfolder_path):
+    app.logger.info(f'Process File for Bar Chart : Using file for bar chart: {file_path}')
+    app.logger.info(f'Process File for Bar Chart : Using existing subfolder for bar chart: {subfolder_path}')
     html_list = []
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
@@ -50,12 +62,13 @@ def process_file_for_bar_chart(file_path, subfolder_path):
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
     column_names = df.columns.to_list()
+    app.logger.info(f'Process File for Bar Chart : Column Names: {column_names}')
     for column_name in column_names:
         # Check if the column is categorical or boolean
         if df[column_name].dtype == 'object' or df[column_name].dtype == 'bool':
             counts_df = df[column_name].value_counts().reset_index()
             counts_df.columns = [column_name, "Count"]
-            fig = px.bar(
+            fig_bar = px.bar(
                 # df[column_name].value_counts().reset_index(),
                 counts_df,
                 x=column_name,
@@ -63,27 +76,31 @@ def process_file_for_bar_chart(file_path, subfolder_path):
                 title=f"Bar Chart of {column_name} (Category Count)",
                 labels={"column_name": column_name, "Count": "Count"},
             )
-            
+              
         # For numerical columns
         elif df[column_name].dtype in ['int64', 'float64']:
             counts_df = df[column_name].value_counts().reset_index()
             counts_df.columns = [column_name, "Frequency"]
-            fig = px.bar(
+            fig_bar = px.bar(
                 # df[column_name].value_counts().reset_index(),
                 counts_df,
                 x=column_name,
                 y="Frequency",
                 title=f"Bar Chart of {column_name} (Numerical Value Counts)",
                 labels={column_name: column_name, "Frequency": "Frequency"},
-            )
-        
+            )  
+                 
         html_file_path = os.path.join(subfolder_path, f"bar_chart_{column_name}.html")
-        fig.write_html(html_file_path)
+        app.logger.info(f'Process File for Bar Chart : HTML File Path: {html_file_path}')
+        fig_bar.write_html(html_file_path)
             
         html_list.append(f'/{html_file_path}')
+    app.logger.info(f'Process File for Bar Chart : HTML List: {html_list}')
     return html_list
 
 def process_file_for_box_plots(file_path, subfolder_path):
+    app.logger.info(f'Process File for Box Plots : Using file for box plot: {file_path}')
+    app.logger.info(f'Process File for Box Plots : Using existing subfolder for box plot: {subfolder_path}')
     html_list = []
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
@@ -91,7 +108,7 @@ def process_file_for_box_plots(file_path, subfolder_path):
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
     numeric_columns = df.select_dtypes(include=['number']).columns.to_list()
-    numeric_columns = df.select_dtypes(include=['number']).columns.to_list()
+    app.logger.info(f'Process File for Box Plots : Numeric Columns: {numeric_columns}')
 
     for column_name in numeric_columns:
         fig_box = px.box(df, y=column_name, title=f"Box Plot of {column_name}")
@@ -99,20 +116,24 @@ def process_file_for_box_plots(file_path, subfolder_path):
             yaxis_title=column_name,
             title_x=0.5
         )
-
         html_file_path = os.path.join(subfolder_path, f"box_plot_{column_name}.html")
         fig_box.write_html(html_file_path)
+        app.logger.info(f'Process File for Box Plots : HTML File Path: {html_file_path}')
         html_list.append(f'/{html_file_path}')
+    app.logger.info(f'Process File for Box Plots : HTML List: {html_list}')
 
     return html_list
 
 def process_file_for_correlation(file_path, subfolder_path):
+    app.logger.info(f'Process File for Correlation : Using file for correlation: {file_path}')
+    app.logger.info(f'Process File for Correlation : Using existing subfolder for correlation: {subfolder_path}')
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df = pd.read_csv(file_path, encoding=encoding_result)
     numerical_df = df.select_dtypes(include=['number'])
-    correlation_matrix = numerical_df.corr()  
+    app.logger.info(f'Process File for Correlation : Numerical Columns: {numerical_df.columns}')
+    correlation_matrix = numerical_df.corr()
     fig_corr = px.imshow(
         correlation_matrix,
         text_auto=True,
@@ -133,6 +154,8 @@ def process_file_for_correlation(file_path, subfolder_path):
     html_file_path_square = os.path.join(subfolder_path, "correlation_heatmap_r².html")
     fig_corr.write_html(html_file_path)
     fig_corr_square.write_html(html_file_path_square)
+    app.logger.info(f'Process File for Correlation : HTML File Path: {html_file_path}')
+    app.logger.info(f'Process File for Correlation : HTML File Path Square: {html_file_path_square}')
  
     return [f'/{html_file_path}', f'/{html_file_path_square}']
        
@@ -596,3 +619,22 @@ def generate_correlation_urls(fileName):
 #                     html_list.append(html_url)
                 
 #     return html_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

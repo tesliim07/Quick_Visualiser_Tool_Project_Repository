@@ -5,6 +5,18 @@ const ModifiedCSVPreviewDisplay: React.FC<{ triggerGetPreview: boolean, file_nam
     const [modifiedCSVPreview, setModifiedCSVPreview] = useState<any[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             await fetchModifiedCSVPreview();
+    //         } catch (error) {
+    //             console.error("Error fetching modified CSV preview:", error);
+    //         }
+    //     }; 
+    //     fetchData();
+ 
+    // }, [triggerGetPreview]);
+
     useEffect(() => {
         fetchModifiedCSVPreview();
  

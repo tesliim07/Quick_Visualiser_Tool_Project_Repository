@@ -20,9 +20,9 @@ const DatasetPage : React.FC = () => {
     const [boxPlotUrls, setBoxPlotUrls] = useState<string[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const tableFieldHeader = ["Field", "Inferred Type", "Nulls Found", "Percentage of Nulls Found", "Actions", "Histogram Visualisations", "Bar Chart Visualisations", "Box Plot Visualisations"];
-    
+
     useEffect(() => {
-        console.log("Current fileName:", fileName);  // Debugging log
+        console.log("Current fileName:", fileName);
 
         fetchFieldProperties(); 
         fetchHistogramUrls();
@@ -42,7 +42,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching file name:", error);
-            setErrorMessage("Error fetching file name");
+            setErrorMessage("Error fetching file name, Please reload page");
         }
     };
 
@@ -57,7 +57,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching histogram URLs:", error);
-            setErrorMessage("Error fetching histogram URLs");
+            setErrorMessage("Error fetching histogram URLs, Please reload page");
         }
     };
 
@@ -72,7 +72,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching bar chart URLs:", error);
-            setErrorMessage("Error fetching bar chart URLs");
+            setErrorMessage("Error fetching bar chart URLs, Please reload page");
         }
     };
 
@@ -86,7 +86,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching box plot URLs:", error);
-            setErrorMessage("Error fetching box plot URLs");
+            setErrorMessage("Error fetching box plot URLs, Please reload page");
         }
     };
 
@@ -98,7 +98,7 @@ const DatasetPage : React.FC = () => {
             }
         } catch (error) {
             console.error("Error fetching number of rows:", error);
-            setErrorMessage("Error fetching number of rows");
+            setErrorMessage("Error fetching number of rows, Please reload page");
         }
     }
 

@@ -6,10 +6,11 @@ from flask_cors import CORS
 import os
 from wtforms.validators import InputRequired
 import pandas as pd
-from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, get_number_of_rows, remove_nulls_in_column, get_preview, delete_modified_dataset, delete_file_from_list
+from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, get_number_of_rows, has_duplicates, remove_nulls_in_column, remove_duplicates, get_preview, delete_modified_dataset, delete_file_from_list
 from visualisations import generate_histogram_urls, generate_bar_chart_urls,generate_correlation_urls, generate_box_plot_urls
 from sqlalchemy import create_engine
 import logging
+import json
 
 
 app = Flask(__name__)
@@ -50,32 +51,13 @@ def getFileInfos():
     fileinfos = get_file_infos()
     return fileinfos, 200
 
-# @app.route('/getColumnNames', methods=['GET'])
-# def getColumnNames():
-#     global uploaded_files
-#     column_names_dict = {}
-#     if len(uploaded_files) == 0:
-#         return 'No files uploaded', 400
-#     # Extract the column data types
-#     try:
-#         for each_file in uploaded_files:
-#             with open(each_file, "rb") as file:
-#                 result = chardet.detect(file.read())
-#                 encoding_result = result.get('encoding')
-            
-#             df = pd.read_csv(each_file, encoding=encoding_result)
-#             column_names = df.columns.to_list()
-#             filename = os.path.splitext(os.path.basename(each_file))[0].lower()
-#             column_names_dict[filename] = column_names
-#         return column_names_dict, 200
-#     except Exception as e:
-#         return f'An error occurred while processing the file: {str(e)}', 500
-
 
 @app.route('/getColumnProperties', methods=['GET'])
 def getColumnProperties(): 
     try:
-        column_properties = get_column_properties()
+        files_param = request.args.get('files')
+        file_paths = json.loads(files_param)
+        column_properties = get_column_properties(file_paths)
         return column_properties, 200
     except Exception as e:
         return f'An error occurred while processing the file: {str(e)}', 500
@@ -110,6 +92,27 @@ def removeNulls():
     except Exception as e:
         return f'An error occurred while removing null values: {str(e)}', 500
     
+@app.route('/hasDuplicates/<string:fileName>', methods=['GET'])
+def hasDuplicates(fileName):
+    try:
+        duplicates = has_duplicates(fileName)
+        return duplicates, 200
+    except Exception as e:
+        return f'An error occurred while getting duplicates: {str(e)}', 500
+    
+@app.route('/removeDuplicates', methods=['POST'])
+def removeDuplicates():
+    try:
+        data = request.get_json()
+        fileName = data.get("file_name")
+        
+        if not fileName:
+            return f'error: Missing fileName', 400
+        removeDuplicates = remove_duplicates(fileName)
+        return removeDuplicates, 200
+    except Exception as e:
+        return f'An error occurred while removing duplicates: {str(e)}', 500
+
 @app.route('/revertToOriginalDataset/<string:fileName>', methods=['DELETE'])
 def revertToOriginalDataset(fileName):
     try:

@@ -70,19 +70,16 @@ def get_file_infos():
 
 
 
-def get_column_properties():
-    # global uploaded_files 
+def get_column_properties(file_paths):
     column_summaries = {}
-    if len(uploaded_files) == 0:
-        return 'No file uploaded'
     
-    for each_file in uploaded_files:
-        app.logger.info('file: ' + each_file)
-        table_name = os.path.splitext(os.path.basename(each_file))[0]
-        with open(each_file, "rb") as file:
+    for each_file_path in file_paths:
+        app.logger.info('filepath: ' + each_file_path)
+        table_name = os.path.splitext(os.path.basename(each_file_path))[0]
+        with open(each_file_path, "rb") as file:
             result = chardet.detect(file.read(5000))
             encoding_result = result.get('encoding')
-        df_iter = pd.read_csv(each_file, encoding=encoding_result, chunksize=10000)
+        df_iter = pd.read_csv(each_file_path, encoding=encoding_result, chunksize=10000)
         df = pd.concat(df_iter, ignore_index=True)
         summary = []
         dtypes = df.dtypes.astype(str).replace({'object': 'string', 'int64': 'integer', 'float64': 'float'}) 
@@ -102,11 +99,14 @@ def get_column_properties():
 
 
 def process_file_for_fields_properties(file_path):
+    app.logger.info(f'Process File for Fields Properties, file_path: {file_path}')
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
+    app.logger.info(f'Process File for Fields Properties, encoding_result: {encoding_result}')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
+    app.logger.info(f'Process File for Fields Properties, df: {df}')
     dtypes = df.dtypes.astype(str).replace({'object': 'string', 'int64': 'integer', 'float64': 'float'}) 
     is_na_any = df.isna().any()
     na_percentage = df.isna().mean() * 100
@@ -119,6 +119,7 @@ def process_file_for_fields_properties(file_path):
         ]
         for column in df.columns
     ]
+    app.logger.info(f'Process File for Fields Properties, fields_properties_list: {fields_properties_list}')
     return fields_properties_list
 
 def process_file_for_remove_nulls(fileName, file_path, columnName):
@@ -135,7 +136,35 @@ def process_file_for_remove_nulls(fileName, file_path, columnName):
     modified_files.add(modifiedFilepath)
     return f'Null values removed successfully and saved to {modifiedFilepath}'
 
+def process_file_for_has_duplicates(file_path):
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(5000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
+    df = pd.concat(df_iter, ignore_index=True)
+    if df.duplicated().any():
+        return 'True'
+    else:
+        return 'False'
+
+
+def process_file_for_remove_duplicates(fileName, file_path):
+    global modified_files
+    with open(file_path, "rb") as file:
+        result = chardet.detect(file.read(5000))
+        encoding_result = result.get('encoding')
+    df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
+    df = pd.concat(df_iter, ignore_index=True)
+    df = df.drop_duplicates(keep='last')
+    df = df.reset_index(drop=True)
+    modifiedFilepath = f"{modified_folder}/modified_{fileName}.csv"
+    app.logger.info(f'Process Remove Duplicates, Saving modified file: {modifiedFilepath}')
+    df.to_csv(modifiedFilepath, index=False)
+    modified_files.add(modifiedFilepath)
+    return f'Duplicates removed successfully and saved to {modifiedFilepath}'
+
 def process_file_for_preview(file_path):
+    app.logger.info(f'Process File for Preview, file_path: {file_path}')
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
@@ -144,14 +173,17 @@ def process_file_for_preview(file_path):
     df = df.fillna("-").head(15)
     for column in df.select_dtypes(include=['number']).columns:
         df[column] = df[column].map(lambda x: f"{x:,}")
+    app.logger.info(f'Process File for Preview, df: {df}')
     return df.to_dict(orient='records')
 
 def process_file_for_number_of_rows_retrieval(file_path):
+    app.logger.info(f'Process File for Number of Rows, file_path: {file_path}')
     with open(file_path, "rb") as file:
         result = chardet.detect(file.read(5000))
         encoding_result = result.get('encoding')
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
+    app.logger.info(f'Process File for Number of Rows, df: {df}')
     return f"{len(df):,}"
     
 def get_fields_properties(fileName):
@@ -189,7 +221,29 @@ def remove_nulls_in_column(fileName, columnName):
     if uploaded_file_path in uploaded_files:
         return process_file_for_remove_nulls(fileName, uploaded_file_path, columnName) 
     return 'File not uploaded yet'
-    
+
+def remove_duplicates(fileName):
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Remove Duplicates, Using modified file: {modified_file_path}')
+        return process_file_for_remove_duplicates(fileName,modified_file_path)
+    app.logger.info(f'Remove Duplicates, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_remove_duplicates(fileName, uploaded_file_path) 
+    return 'File not uploaded yet' 
+
+def has_duplicates(fileName):
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
+    if modified_file_path in modified_files:
+        app.logger.info(f'Get Duplicates, Using modified file: {modified_file_path}')
+        return process_file_for_has_duplicates(modified_file_path)
+    app.logger.info(f'Get Duplicates, No modified file found, searching in uploaded files...')
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_has_duplicates(uploaded_file_path) 
+    return 'File not uploaded yet'
+
      
 def get_preview(fileName):
     modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
@@ -224,14 +278,6 @@ def delete_file_from_list(fileName):
     
 
 
-# def ignoreIndexColumns(df):
-#     index_columns = []
-#     for column in df.columns:
-#         if df[column].is_unique:
-#             index_columns.append(column)
-#     #add code for ignoring index columns when creating visualisations
-#     return index_columns
-
 
 # def changeColumnDataTypes(change_dataTypes, df):
 #     try:
@@ -246,4 +292,10 @@ def delete_file_from_list(fileName):
 #     except Exception as e:
 #         print(f"Error changing column data types: {str(e)}")
 #         return df  # Return original DataFrame if an error occurs
+    
+    
+    
+    
+    
+    
     

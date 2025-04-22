@@ -38,6 +38,7 @@ const Upload : React.FC = () => {
 
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    console.log("Files to be uploaded:", files);
 
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
@@ -87,7 +88,7 @@ const Upload : React.FC = () => {
           </ul>
       </div>
       <p className="upload-status">{uploadStatus}</p>
-      {uploadStatus === "File(s) upload successful" ? <ColumnProperties /> : null}
+      {(uploadStatus === "File(s) upload successful"  && files.length != 0)? <ColumnProperties files = {files}/> : null}
     </div>
   )
 }

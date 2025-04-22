@@ -1,18 +1,27 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const ColumnProperties: React.FC = () => {
+const ColumnProperties: React.FC<{files: File[]}> = ({files}) => {
     const [tableProperties, setTableProperties] = useState<{ [key: string]: any[] }>({});
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     useEffect(() => {
         const fetchColumnSummaries = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/getColumnProperties");
+                console.log("Fetching column summaries for files:", files);
+                // Define the path where the files are stored
+                const folderPath = './uploadedFiles/';
+                const filePaths = [];
+                for (let i = 0; i < files.length; i++) {
+                    const filePath = folderPath + files[i].name;
+                    filePaths.push(filePath);
+                }
+                 // Encode the file names array into a query string
+                const encodedFilePaths = encodeURIComponent(JSON.stringify(filePaths));
+                const response = await axios.get(`http://localhost:5000/getColumnProperties?files=${encodedFilePaths}`);
                 setTableProperties(response.data);
             } catch (error) {
-                console.error("Error fetching column properties:", error);
-                setErrorMessage("Error fetching column properties");
+                console.error("Error fetching column summary:", error);
+                setErrorMessage("Error fetching column summary");
             }
         };
 
