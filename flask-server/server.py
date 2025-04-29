@@ -7,7 +7,7 @@ import os
 from wtforms.validators import InputRequired
 import pandas as pd
 from dataHandling import get_column_properties, get_uploaded_files, get_file_infos, get_file_names, get_fields_properties, get_number_of_rows, has_duplicates, remove_nulls_in_column, remove_duplicates, get_preview, delete_modified_dataset, delete_file_from_list
-from visualisations import generate_histogram_urls, generate_bar_chart_urls,generate_correlation_urls, generate_box_plot_urls
+from visualisations import generate_histogram, generate_bar_chart,generate_correlation_urls, generate_box_plot
 from sqlalchemy import create_engine
 import logging
 import json
@@ -137,21 +137,29 @@ def getPreview(fileName):
     except Exception as e:
         return f'An error occurred while getting the {fileName} preview: {str(e)}', 500
     
-@app.route('/getHistogramUrls/<string:fileName>', methods=['GET'])
-def getHistogramUrls(fileName):
+@app.route('/getHistogram/<string:fileName>/<string:decider>', methods=['GET'])
+def getHistogram(fileName,decider):
     try:
-        histogram_urls = generate_histogram_urls(fileName)
-        return histogram_urls, 200
+        histogram = generate_histogram(fileName,decider)
+        return histogram, 200
     except Exception as e:
         return f'An error occurred while generating the histograms: {str(e)}', 500
     
-@app.route('/getBarChartUrls/<string:fileName>', methods=['GET'])
-def getBarChartUrls(fileName):
+@app.route('/getBarChart/<string:fileName>/<string:decider>', methods=['GET'])
+def getBarChart(fileName,decider):
     try:
-        bar_chart_urls = generate_bar_chart_urls(fileName)
-        return bar_chart_urls, 200
+        bar_chart = generate_bar_chart(fileName,decider)
+        return bar_chart, 200
     except Exception as e:
         return f'An error occurred while generating the bar charts: {str(e)}', 500
+    
+@app.route('/getBoxPlot/<string:fileName>/<string:decider>', methods=['GET'])
+def getBoxPlot(fileName,decider):
+    try:
+        box_plot = generate_box_plot(fileName,decider)
+        return box_plot, 200
+    except Exception as e:
+        return f'An error occurred while generating the box plots: {str(e)}', 500
     
 @app.route('/getCorrelationUrls/<string:fileName>', methods=['GET'])
 def getCorrelationUrls(fileName):
@@ -160,14 +168,6 @@ def getCorrelationUrls(fileName):
         return correlation_heatmap_urls, 200
     except Exception as e:
         return f'An error occurred while generating the correlation heatmap: {str(e)}', 500
-    
-@app.route('/getBoxPlotUrls/<string:fileName>', methods=['GET'])
-def getBoxPlotUrls(fileName):
-    try:
-        box_plot_urls = generate_box_plot_urls(fileName)
-        return box_plot_urls, 200
-    except Exception as e:
-        return f'An error occurred while generating the box plots: {str(e)}', 500
     
 
     

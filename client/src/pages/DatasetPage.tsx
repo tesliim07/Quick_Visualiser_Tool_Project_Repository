@@ -18,18 +18,24 @@ const DatasetPage : React.FC = () => {
     const [histogramUrls, setHistogramUrls] = useState<string[]>([]);
     const [barChartUrls, setBarChartUrls] = useState<string[]>([]);
     const [boxPlotUrls, setBoxPlotUrls] = useState<string[]>([]);
+    // const [histogramImgs, setHistogramImgs] = useState<string[]>([]);
+    // const [barChartImgs, setBarChartImgs] = useState<string[]>([]);
+    // const [boxPlotImgs, setBoxPlotImgs] = useState<string[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [iframeVisible, setIframeVisible] = useState(false);
     const tableFieldHeader = ["Field", "Inferred Type", "Nulls Found", "Percentage of Nulls Found", "Actions", "Histogram Visualisations", "Bar Chart Visualisations", "Box Plot Visualisations"];
 
     useEffect(() => {
-        console.log("Current fileName:", fileName);
+        const fetchAll = async () => {
+            console.log("Current fileName:", fileName);
 
-        fetchFieldProperties(); 
-        fetchHistogramUrls();
-        fetchBarChartUrls();
-        fetchBoxPlotUrls();
-        fetchNumberOfRowsRetrieval()
-
+            await fetchFieldProperties(); 
+            await fetchHistogramUrls();
+            fetchBarChartUrls();
+            fetchBoxPlotUrls();
+            fetchNumberOfRowsRetrieval();
+        };
+        fetchAll();
 
     }, [isRemoveNullClicked, fileName]);
 
@@ -50,7 +56,7 @@ const DatasetPage : React.FC = () => {
     const fetchHistogramUrls = async () => {
         console.log("Fetching histogram URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getHistogramUrls/${fileName}`);
+            const response = await axios.get(`http://localhost:5000/getHistogram/${fileName}/urls`);
             if (response.status === 200) {
                 console.log("Histogram URLs: " + response.data)
                 setHistogramUrls(response.data);
@@ -65,7 +71,7 @@ const DatasetPage : React.FC = () => {
     const fetchBarChartUrls = async () => {
         console.log("Fetching bar chart URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getBarChartUrls/${fileName}`);
+            const response = await axios.get(`http://localhost:5000/getBarChart/${fileName}/urls`);
             if (response.status === 200) {
                 console.log("Bar Chart URLs: " + response.data)
                 setBarChartUrls(response.data);
@@ -79,7 +85,7 @@ const DatasetPage : React.FC = () => {
     const fetchBoxPlotUrls = async () => {
         console.log("Fetching box plot URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getBoxPlotUrls/${fileName}`);
+            const response = await axios.get(`http://localhost:5000/getBoxPlot/${fileName}/urls`);
             if (response.status === 200) {
                 console.log("Box Plot URLs: " + response.data)
                 setBoxPlotUrls(response.data);
@@ -89,6 +95,46 @@ const DatasetPage : React.FC = () => {
             setErrorMessage("Error fetching box plot URLs, Please reload page");
         }
     };
+
+    // const fetchHistogramImgs = async () => {
+    //     console.log("Fetching histogram IMGs for", fileName);
+    //     try {
+    //         const response = await axios.get(`http://localhost:5000/getHistogram/${fileName}/imgs`);
+    //         if (response.status === 200) {
+    //             console.log("Histogram IMGs: " + response.data)
+    //             setHistogramImgs(response.data);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching histogram URLs:", error);
+    //     }
+    // };
+
+
+    // const fetchBarChartImgs = async () => {
+    //     console.log("Fetching bar chart IMGs for", fileName);
+    //     try {
+    //         const response = await axios.get(`http://localhost:5000/getBarChart/${fileName}/imgs`);
+    //         if (response.status === 200) {
+    //             console.log("Bar Chart IMGs: " + response.data)
+    //             setBarChartImgs(response.data);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching bar chart URLs:", error);
+    //     }
+    // };
+
+    // const fetchBoxPlotImgs = async () => {
+    //     console.log("Fetching box plot IMGs for", fileName);
+    //     try {
+    //         const response = await axios.get(`http://localhost:5000/getBoxPlot/${fileName}/imgs`);
+    //         if (response.status === 200) {
+    //             console.log("Box Plot IMGs: " + response.data)
+    //             setBoxPlotImgs(response.data);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error fetching box plot URLs:", error);
+    //     }
+    // };
 
     const fetchNumberOfRowsRetrieval = async () => {
         try {
@@ -136,6 +182,7 @@ const DatasetPage : React.FC = () => {
         } else {
             console.log("Histogram URL not found for", fieldName);
         }
+        setIframeVisible(!iframeVisible);
     };
 
     const handleViewBarChart = (fieldName: string) => {
@@ -183,13 +230,13 @@ const DatasetPage : React.FC = () => {
                 <thead>
                     <tr>
                         {tableFieldHeader.map((col) => (
-                            <th key={col} style={{ padding: "2px", border: "1px solid black", fontSize: "20px"}}>{col}</th>
+                            <th key={col} style={{ padding: "2px", border: "1px solid black", fontSize: "20px", backgroundColor: "black", fontStyle: "-moz-initial", color: "white"}}>{col}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                {fieldProperties.map((fieldProperty) => (
-                    <tr key ={fieldProperty[0]}>
+                {fieldProperties.map((fieldProperty, rowIndex) => (
+                    <tr key ={fieldProperty[0]} style={{ backgroundColor: rowIndex % 2 === 0 ? "#f2f2f2" : "white" }}>
                         {Array.isArray(fieldProperty) ? fieldProperty.map((property, index) => (
                             <td key={index} style={{ padding: "10px", border: "1px solid black" }}>
                                 {property === true ? "true" : property === false ? "false" : property}
@@ -203,27 +250,65 @@ const DatasetPage : React.FC = () => {
                             <button className="button-dataset" disabled={(fieldProperty[2] == "False")} onClick = {() => handleRemoveNulls(fieldProperty[0])}>Remove Nulls</button>
                         </td>
                         <td style={{ padding: "10px", border: "1px solid black"}}>
+                        <div className="hover-container">
                             <button 
                             className="visualisation-button" 
                             disabled={(fieldProperty[1] == "string" || fieldProperty[1] == "bool") || fieldProperty[1].includes("datetime")}
                             onClick={() => handleViewHistogram(fieldProperty[0])}>
+                                {/* <iframe src={`http://127.0.0.1:5000/static/histogramVisualisations/histogramVisualisations_${fileName}/histogram_${fieldProperty[0]}.html`}/> */}
                                 View Histogram
                             </button>
+                            {/* <iframe
+                                    src={`http://127.0.0.1:5000/static/histogramVisualisations/histogramVisualisations_${fileName}/histogram_${fieldProperty[0]}.html`}
+                                    className="histogram-iframe"
+                                /> */}
+                            <div className="hover-iframe">
+                                {histogramUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                    src={`http://127.0.0.1:5000/static/histogramVisualisations/histogramVisualisations_${fileName}/histogram_${fieldProperty[0]}.html?ts=${Date.now()}`}
+                                    className="histogram-iframe"
+                                />)}
+                            </div>
+                        </div>
                         </td>
                         <td style={{ padding: "10px", border: "1px solid black"}}>
+                        <div className="hover-container">
                             <button 
                             className="visualisation-button" 
                             onClick={() => handleViewBarChart(fieldProperty[0])}>
                                 View Bar Chart
                             </button>
+                            {/* <iframe
+                                    src={`http://127.0.0.1:5000/static/barChartVisualisations/barChartVisualisations_${fileName}/bar_chart_${fieldProperty[0]}.html`}
+                                    className="histogram-iframe"
+                                /> */}
+                            <div className="hover-iframe">
+                                {barChartUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                    src={`http://127.0.0.1:5000/static/barChartVisualisations/barChartVisualisations_${fileName}/bar_chart_${fieldProperty[0]}.html?ts=${Date.now()}`}
+                                    className="histogram-iframe"
+                                />)} 
+                            </div>
+                        </div>
                         </td>
                         <td style={{ padding: "10px", border: "1px solid black"}}>
+                        <div className="hover-container">
                             <button 
                             className="visualisation-button" 
                             disabled={(fieldProperty[1] == "string" || fieldProperty[1] == "bool") || fieldProperty[1].includes("datetime")}
                             onClick={() => handleViewBoxPlot(fieldProperty[0])}>
                                 View Box Plot
                             </button>
+                            {/* <iframe
+                                    src={`http://127.0.0.1:5000/static/boxPlotVisualisations/boxPlotVisualisations_${fileName}/box_plot_${fieldProperty[0]}.html`}
+                                    className="histogram-iframe"
+                                /> */}
+                            <div className="hover-iframe">
+
+                                {boxPlotUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                    src={`http://127.0.0.1:5000/static/boxPlotVisualisations/boxPlotVisualisations_${fileName}/box_plot_${fieldProperty[0]}.html?ts=${Date.now()}`}
+                                    className="histogram-iframe"
+                                />)}
+                            </div>
+                        </div>
                         </td>
                         
                     </tr>

@@ -57,19 +57,19 @@ const ViewDataSets : React.FC = () => {
                 <thead>
                     <tr>
                         {tableViewDataSetsHeader.map((col) => (
-                             <th key={col} style={{ padding: "2px", border: "1px solid black", fontSize: "20px"}}>{col}</th>
+                             <th key={col} style={{ padding: "2px", border: "1px solid black", fontSize: "20px", backgroundColor: "black", fontStyle: "-moz-initial", color: "white"}}>{col}</th>
                         ))}
                     </tr>
                     </thead>
                 <tbody>
-                    {fileNames.map((fileName,index) => (
+                    {fileNames.map((fileName,rowIndex) => (
                     
-                        <tr key={fileName}>
+                        <tr key={fileName} style={{ backgroundColor: rowIndex % 2 === 0 ? "#f2f2f2" : "white" }}>
                             <td style={{ padding: "10px", border: "1px solid black" }}>
                                 <Link to={`/dataset-page/${fileName}`}>{fileName}</Link>
                             </td>
                             <td style={{ padding: "10px", border: "1px solid black" }}>
-                                {fileInfos[index].includes(fileName) && fileInfos[index].split(";")[1]}
+                                {fileInfos[rowIndex].includes(fileName) && fileInfos[rowIndex].split(";")[1]}
                             </td>
                             <td style={{ padding: "10px", border: "1px solid black" }}>
                                 <button onClick={() => removeFile(fileName)}>Remove</button>

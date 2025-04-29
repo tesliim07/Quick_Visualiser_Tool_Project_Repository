@@ -43,6 +43,9 @@ services:
       - ./flask-server/static/barChartVisualisations:/app/static/barChartVisualisations
       - ./flask-server/static/correlationVisualisations:/app/static/correlationVisualisations
       - ./flask-server/static/boxPlotVisualisations:/app/static/boxPlotVisualisations
+      - ./flask-server/static/histogramImages:/app/static/histogramImages
+      - ./flask-server/static/barChartImages:/app/static/barChartImages
+      - ./flask-server/static/boxPlotImages:/app/static/boxPlotImages
     depends_on:
       - postgres
 

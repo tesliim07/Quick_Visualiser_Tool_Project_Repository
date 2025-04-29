@@ -8,6 +8,7 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
     const [correlationUrls, setCorrelationUrls] = useState<any[]>([]);
     const [hasDuplicates, setHasDuplicates] = useState<boolean>(false);
     const [isRemoveDuplicatesClicked, setIsRemoveDuplicatesClicked] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         fetchCorrelationUrls();
@@ -24,6 +25,7 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
             }
         } catch (error) {
             console.error("Error fetching correlation URLs:", error);
+            setErrorMessage("Error fetching correlation URLs, Please reload page and try again.");
         }
     }
 
@@ -67,20 +69,24 @@ const TableOperations: React.FC<{ triggerGetPreview: boolean, file_name: string 
         <div>
             <h1 className="table-operations-h1">Table Operations</h1>
             <div className="view-table-operations">
-                {correlationUrls.map((plot: string, index) => {
-                    // Extract column name from the plot file name
-                    const linkName = plot.replace('/static/correlationVisualisations/', '').replace('.html', '');
-                    return (
-                        <div key={index}>
-                            <a
-                                href={`http://localhost:5000${plot}`}
-                                target="_blank"
-                                rel="noreferrer">
-                                    {linkName}
-                            </a>
-                        </div>
-                    );
-                })}
+                {errorMessage === null ? (
+                    correlationUrls.map((plot: string, index) => {
+                        // Extract column name from the plot file name
+                        const linkName = plot.replace('/static/correlationVisualisations/', '').replace('.html', '');
+                        return (
+                            <div key={index}>
+                                <a
+                                    href={`http://localhost:5000${plot}`}
+                                    target="_blank"
+                                    rel="noreferrer">
+                                        {linkName}
+                                </a>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p style={{ color: 'red' }}>{errorMessage}</p>
+                )}
                 <div className="">
                     <button disabled={hasDuplicates === false} onClick={() => handleRemoveDuplicates()}>
                         Remove Duplicates

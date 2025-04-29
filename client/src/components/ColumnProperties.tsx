@@ -38,7 +38,7 @@ const ColumnProperties: React.FC<{files: File[]}> = ({files}) => {
                 <div key={tableName}>
                     <h2>{tableName} Column Summary</h2>
                     <table border={1} style={{ margin: "0 auto", textAlign: "center" }}>
-                        <thead>
+                        <thead style={{backgroundColor: "black", fontStyle: "-moz-initial", color: "white" }}>
                             <tr>
                                 <th>COLUMN NAME</th>
                                 <th>DATA TYPE</th>
@@ -46,8 +46,8 @@ const ColumnProperties: React.FC<{files: File[]}> = ({files}) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {columns.map((col, index) => (
-                                <tr key={index}>
+                            {columns.map((col, rowIndex) => (
+                                <tr key={rowIndex} style={{ backgroundColor: rowIndex % 2 === 0 ? "#f2f2f2" : "white" }} >
                                     <td>{col.column}</td>
                                     <td>{col.data_type}</td>
                                     <td>{col.bad_data}</td>
