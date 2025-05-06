@@ -56,7 +56,7 @@ const DatasetPage : React.FC = () => {
     const fetchHistogramUrls = async () => {
         console.log("Fetching histogram URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getHistogram/${fileName}/urls`);
+            const response = await axios.get(`http://localhost:5000/getHistogram/${fileName}`);
             if (response.status === 200) {
                 console.log("Histogram URLs: " + response.data)
                 setHistogramUrls(response.data);
@@ -71,7 +71,7 @@ const DatasetPage : React.FC = () => {
     const fetchBarChartUrls = async () => {
         console.log("Fetching bar chart URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getBarChart/${fileName}/urls`);
+            const response = await axios.get(`http://localhost:5000/getBarChart/${fileName}`);
             if (response.status === 200) {
                 console.log("Bar Chart URLs: " + response.data)
                 setBarChartUrls(response.data);
@@ -85,7 +85,7 @@ const DatasetPage : React.FC = () => {
     const fetchBoxPlotUrls = async () => {
         console.log("Fetching box plot URLs for", fileName);
         try {
-            const response = await axios.get(`http://localhost:5000/getBoxPlot/${fileName}/urls`);
+            const response = await axios.get(`http://localhost:5000/getBoxPlot/${fileName}`);
             if (response.status === 200) {
                 console.log("Box Plot URLs: " + response.data)
                 setBoxPlotUrls(response.data);
@@ -177,7 +177,6 @@ const DatasetPage : React.FC = () => {
         if (histogramUrl) {
             console.log("Histogram URL found for", histogramUrl);
             setIsViewHistogramClicked(!isViewHistogramClicked);
-            // Open the histogram in a new tab
             window.open(`http://localhost:5000${histogramUrl}`, '_blank', 'noopener noreferrer');
         } else {
             console.log("Histogram URL not found for", fieldName);
@@ -191,7 +190,6 @@ const DatasetPage : React.FC = () => {
         if (barChartUrl) {
             console.log("Bar Chart URL found for", barChartUrl);
             setIsViewBarChartClicked(!isViewBarChartClicked);
-            // Open the bar chart in a new tab
             window.open(`http://localhost:5000${barChartUrl}`, '_blank', 'noopener noreferrer');
         } else {
             console.log("Bar Chart URL not found for", fieldName);
@@ -204,7 +202,6 @@ const DatasetPage : React.FC = () => {
         if (boxPlotUrl) {
             console.log("Box Plot URL found for", boxPlotUrl);
             setIsViewBoxPlotClicked(!isViewBoxPlotClicked);
-            // Open the box plot in a new tab
             window.open(`http://localhost:5000${boxPlotUrl}`, '_blank', 'noopener noreferrer');
         } else {
             console.log("Box Plot URL not found for", fieldName);

@@ -13,9 +13,9 @@ app = Flask(__name__)
 histogram_dir = "static/histogramVisualisations"
 bar_chart_dir = "static/barChartVisualisations"
 correlation_dir = "static/correlationVisualisations"
-bar_chart_img_dir = "static/barChartImages"
-histogram_img_dir = "static/histogramImages"
-box_plots_img_dir = "static/boxPlotImages"
+# bar_chart_img_dir = "static/barChartImages"
+# histogram_img_dir = "static/histogramImages"
+# box_plots_img_dir = "static/boxPlotImages"
 box_plots_dir = "static/boxPlotVisualisations"
 modified_folder = "./modifiedFiles"
 uploaded_folder = "./uploadedFiles"
@@ -140,101 +140,64 @@ def process_file_for_correlation(file_path, subfolder_path):
     return [f'/{html_file_path}', f'/{html_file_path_square}']
        
 
-def generate_histogram(fileName,decider):
+def generate_histogram(fileName):
     file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
     subfolder_path = os.path.join(histogram_dir, f'histogramVisualisations_{fileName}')
-    subfolder_path_img = os.path.join(histogram_img_dir, f'histogramImages_{fileName}')
-    if decider == 'urls' and os.path.exists(subfolder_path):       
+    if os.path.exists(subfolder_path):       
         try:
             shutil.rmtree(subfolder_path)  # Remove the existing subfolder
         except Exception as e:
             app.logger.error(f"Error removing subfolder {subfolder_path}: {str(e)}")
-        
-    if decider== 'imgs' and os.path.exists(subfolder_path_img):      
-        try:
-            shutil.rmtree(subfolder_path_img)  # Remove the existing subfolder
-        except Exception as e:
-            app.logger.error(f"Error removing subfolder {subfolder_path_img}: {str(e)}")
         
     os.makedirs(subfolder_path, exist_ok=True)
-    os.makedirs(subfolder_path_img, exist_ok=True)
     
     if file_path in modified_files:
-        if decider == 'imgs':
-            return process_file_for_histogram_images(file_path, subfolder_path_img)
         return process_file_for_histogram(file_path, subfolder_path)
     
     file_path = f'./uploadedFiles/{fileName}.csv'
     if file_path in uploaded_files:
-        if decider == 'imgs':
-            return process_file_for_histogram_images(file_path, subfolder_path_img)
         return process_file_for_histogram(file_path, subfolder_path)
     
     return 'File not uploaded yet'
 
-def generate_bar_chart(fileName,decider):
+def generate_bar_chart(fileName):
     file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
     subfolder_path = os.path.join(bar_chart_dir, f'barChartVisualisations_{fileName}')
-    subfolder_path_img = os.path.join(bar_chart_img_dir, f'barChartImages_{fileName}')
-    if decider == 'urls' and os.path.exists(subfolder_path):  
+    if os.path.exists(subfolder_path):  
         try:
             shutil.rmtree(subfolder_path)  # Remove the existing subfolder
         except Exception as e:
             app.logger.error(f"Error removing subfolder {subfolder_path}: {str(e)}")
-                      
-    if decider == 'imgs' and os.path.exists(subfolder_path_img):   
-        try:
-            shutil.rmtree(subfolder_path_img)  # Remove the existing subfolder
-        except Exception as e:
-            app.logger.error(f"Error removing subfolder {subfolder_path_img}: {str(e)}")
       
     os.makedirs(subfolder_path, exist_ok=True) 
-    os.makedirs(subfolder_path_img, exist_ok=True)
     
     if file_path in modified_files:
-        if decider == 'imgs':
-            return process_file_for_bar_chart_images(file_path, subfolder_path_img)
         return process_file_for_bar_chart(file_path, subfolder_path)
     
     file_path = f'./uploadedFiles/{fileName}.csv'
     if file_path in uploaded_files:
-        if decider == 'imgs':
-            return process_file_for_bar_chart_images(file_path, subfolder_path_img)
         return process_file_for_bar_chart(file_path, subfolder_path)
     
     return 'File not uploaded yet'
 
 
-def generate_box_plot(fileName,decider):
+def generate_box_plot(fileName):
     file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
     subfolder_path = os.path.join(box_plots_dir, f'boxPlotVisualisations_{fileName}')
-    subfolder_path_img = os.path.join(box_plots_img_dir, f'boxPlotImages_{fileName}')
-    if decider == 'urls' and os.path.exists(subfolder_path):
+    if os.path.exists(subfolder_path):
         try:
             shutil.rmtree(subfolder_path)  # Remove the existing subfolder
         except Exception as e:
             app.logger.error(f"Error removing subfolder {subfolder_path}: {str(e)}")
-            
-            
-    if decider == 'imgs' and os.path.exists(subfolder_path_img):
-        try:
-            shutil.rmtree(subfolder_path_img)  # Remove the existing subfolder
-        except Exception as e:
-            app.logger.error(f"Error removing subfolder {subfolder_path_img}: {str(e)}")
       
     os.makedirs(subfolder_path, exist_ok=True)      
-    os.makedirs(subfolder_path_img, exist_ok=True)
     
     if file_path in modified_files:
         app.logger.info(f'Using modified file for box plot: {file_path}')
-        if decider == 'imgs':
-            return process_file_for_box_plots_images(file_path, subfolder_path_img)
         return process_file_for_box_plots(file_path, subfolder_path)
     
     file_path = f'./uploadedFiles/{fileName}.csv'
     if file_path in uploaded_files:
-        if decider == 'imgs':
-            return process_file_for_box_plots_images(file_path, subfolder_path_img)
         return process_file_for_box_plots(file_path, subfolder_path)
     
     return 'File not uploaded yet'

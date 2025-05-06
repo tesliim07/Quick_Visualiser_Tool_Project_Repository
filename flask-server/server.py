@@ -137,26 +137,26 @@ def getPreview(fileName):
     except Exception as e:
         return f'An error occurred while getting the {fileName} preview: {str(e)}', 500
     
-@app.route('/getHistogram/<string:fileName>/<string:decider>', methods=['GET'])
-def getHistogram(fileName,decider):
+@app.route('/getHistogram/<string:fileName>', methods=['GET'])
+def getHistogram(fileName):
     try:
-        histogram = generate_histogram(fileName,decider)
+        histogram = generate_histogram(fileName)
         return histogram, 200
     except Exception as e:
         return f'An error occurred while generating the histograms: {str(e)}', 500
     
-@app.route('/getBarChart/<string:fileName>/<string:decider>', methods=['GET'])
-def getBarChart(fileName,decider):
+@app.route('/getBarChart/<string:fileName>', methods=['GET'])
+def getBarChart(fileName):
     try:
-        bar_chart = generate_bar_chart(fileName,decider)
+        bar_chart = generate_bar_chart(fileName)
         return bar_chart, 200
     except Exception as e:
         return f'An error occurred while generating the bar charts: {str(e)}', 500
     
-@app.route('/getBoxPlot/<string:fileName>/<string:decider>', methods=['GET'])
-def getBoxPlot(fileName,decider):
+@app.route('/getBoxPlot/<string:fileName>', methods=['GET'])
+def getBoxPlot(fileName):
     try:
-        box_plot = generate_box_plot(fileName,decider)
+        box_plot = generate_box_plot(fileName)
         return box_plot, 200
     except Exception as e:
         return f'An error occurred while generating the box plots: {str(e)}', 500
@@ -171,48 +171,7 @@ def getCorrelationUrls(fileName):
     
 
     
-# @app.route('/userConfigs', methods=['POST'])
-# def userConfigs():
-#     global uploaded_files
-#     preview_list = []
-#     if len(uploaded_files) == 0:
-#         return 'No files uploaded', 400
-    
-#     user_configs = request.json
-#     if not user_configs:
-#         return jsonify({'error': 'No configurations provided'}), 400
-#     try:
-#         for each_file in uploaded_files:
-#             with open(each_file, "rb") as file:
-#                 result = chardet.detect(file.read())
-#                 encoding_result = result.get('encoding')
-#                 df = pd.read_csv(each_file, encoding=encoding_result)
-#                 cleaned_df = df
-#                 if user_configs.get('removeDuplicates') == "yes": 
-#                     cleaned_df=cleaned_df.drop_duplicates()
-#                 if user_configs.get('removeRowsWithNullValues') == "yes":
-#                     cleaned_df=cleaned_df.dropna()
-#                 # if user_configs.get('ignoreIndexColumns') == "yes":
-#                 #     ignoreIndexColumns(cleaned_df)
-#                 # if user_configs.get('detectBadDataPercentagePerColumn') == "yes":
-#                 #     detectBadDataPercentagePerColumn(df)
-#                 if user_configs.get('changeColumnDataTypes') == "yes":
-#                     change_dataTypes = user_configs.get('changeDataTypes',{})
-#                      # Extract file name without extension
-#                     filename = os.path.splitext(os.path.basename(each_file))[0].lower()
 
-#                     # Pass only the specific changeDataTypes for the current file
-#                     if filename in change_dataTypes:
-#                         cleaned_df = changeColumnDataTypes(change_dataTypes[filename], cleaned_df)
-                    
-#                 preview = cleaned_df.head(20)
-#                 preview_list.append(preview.to_dict(orient="records"))
-#         app.logger.info(f'Preview of the modified files: {preview_list}')
-#         return preview_list, 200
-        
-        
-#     except Exception as e:
-#         return f'An error occurred while getting the preview of the modified file: {str(e)}', 500
 
 # @app.route('/saveCleanedFiles', methods=['POST'])
 # def saveCleanedFiles():
