@@ -28,6 +28,10 @@ app.logger.setLevel(logging.INFO)
 def get_uploaded_files(files):
     global uploaded_files
     global uploaded_times
+    
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['MODIFIED_FOLDER'], exist_ok=True)
+    
     for file in files:
         if file.filename == '':
             continue
