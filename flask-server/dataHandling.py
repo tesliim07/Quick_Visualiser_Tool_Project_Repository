@@ -130,11 +130,11 @@ def process_file_for_remove_nulls(fileName, file_path, columnName):
     df_iter = pd.read_csv(file_path, encoding=encoding_result, chunksize=10000)
     df = pd.concat(df_iter, ignore_index=True)
     df = df.dropna(subset=[columnName])
-    modifiedFilepath = f"{modified_folder}/modified_{fileName}.csv"
-    app.logger.info(f'Process Remove Nulls, Saving modified file: {modifiedFilepath}')
-    df.to_csv(modifiedFilepath, index=False)
-    modified_files.add(modifiedFilepath)
-    return f'Null values removed successfully and saved to {modifiedFilepath}'
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    app.logger.info(f'Process Remove Nulls, Saving modified file: {modified_file_path}')
+    df.to_csv(modified_file_path, index=False)
+    modified_files.add(modified_file_path)
+    return f'Null values removed successfully and saved to {modified_file_path}'
 
 def process_file_for_has_duplicates(file_path):
     with open(file_path, "rb") as file:
@@ -157,11 +157,11 @@ def process_file_for_remove_duplicates(fileName, file_path):
     df = pd.concat(df_iter, ignore_index=True)
     df = df.drop_duplicates(keep='last')
     df = df.reset_index(drop=True)
-    modifiedFilepath = f"{modified_folder}/modified_{fileName}.csv"
-    app.logger.info(f'Process Remove Duplicates, Saving modified file: {modifiedFilepath}')
-    df.to_csv(modifiedFilepath, index=False)
-    modified_files.add(modifiedFilepath)
-    return f'Duplicates removed successfully and saved to {modifiedFilepath}'
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    app.logger.info(f'Process Remove Duplicates, Saving modified file: {modified_file_path}')
+    df.to_csv(modified_file_path, index=False)
+    modified_files.add(modified_file_path)
+    return f'Duplicates removed successfully and saved to {modified_file_path}'
 
 def process_file_for_preview(file_path):
     app.logger.info(f'Process File for Preview, file_path: {file_path}')
@@ -274,7 +274,7 @@ def delete_file_from_list(fileName):
         os.remove(file_path)
         return 'File removed successfully'
     else:
-        return 'File not found'     
+        return 'File not found'    
     
 
 

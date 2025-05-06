@@ -141,7 +141,8 @@ def process_file_for_correlation(file_path, subfolder_path):
        
 
 def generate_histogram(fileName):
-    file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
     subfolder_path = os.path.join(histogram_dir, f'histogramVisualisations_{fileName}')
     if os.path.exists(subfolder_path):       
         try:
@@ -151,17 +152,17 @@ def generate_histogram(fileName):
         
     os.makedirs(subfolder_path, exist_ok=True)
     
-    if file_path in modified_files:
-        return process_file_for_histogram(file_path, subfolder_path)
+    if modified_file_path in modified_files:
+        return process_file_for_histogram(modified_file_path, subfolder_path)
     
-    file_path = f'./uploadedFiles/{fileName}.csv'
-    if file_path in uploaded_files:
-        return process_file_for_histogram(file_path, subfolder_path)
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_histogram(uploaded_file_path, subfolder_path)
     
     return 'File not uploaded yet'
 
 def generate_bar_chart(fileName):
-    file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
     subfolder_path = os.path.join(bar_chart_dir, f'barChartVisualisations_{fileName}')
     if os.path.exists(subfolder_path):  
         try:
@@ -171,18 +172,18 @@ def generate_bar_chart(fileName):
       
     os.makedirs(subfolder_path, exist_ok=True) 
     
-    if file_path in modified_files:
-        return process_file_for_bar_chart(file_path, subfolder_path)
+    if modified_file_path in modified_files:
+        return process_file_for_bar_chart(modified_file_path, subfolder_path)
     
-    file_path = f'./uploadedFiles/{fileName}.csv'
-    if file_path in uploaded_files:
-        return process_file_for_bar_chart(file_path, subfolder_path)
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_bar_chart(uploaded_file_path, subfolder_path)
     
     return 'File not uploaded yet'
 
 
 def generate_box_plot(fileName):
-    file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    modified_file_path = os.path.join(modified_folder, f'modified_{fileName}.csv')
+    uploaded_file_path = os.path.join(uploaded_folder, f'{fileName}.csv')
     subfolder_path = os.path.join(box_plots_dir, f'boxPlotVisualisations_{fileName}')
     if os.path.exists(subfolder_path):
         try:
@@ -192,13 +193,11 @@ def generate_box_plot(fileName):
       
     os.makedirs(subfolder_path, exist_ok=True)      
     
-    if file_path in modified_files:
-        app.logger.info(f'Using modified file for box plot: {file_path}')
-        return process_file_for_box_plots(file_path, subfolder_path)
+    if modified_file_path in modified_files:
+        return process_file_for_box_plots(modified_file_path, subfolder_path)
     
-    file_path = f'./uploadedFiles/{fileName}.csv'
-    if file_path in uploaded_files:
-        return process_file_for_box_plots(file_path, subfolder_path)
+    if uploaded_file_path in uploaded_files:
+        return process_file_for_box_plots(uploaded_file_path, subfolder_path)
     
     return 'File not uploaded yet'
 

@@ -173,7 +173,9 @@ const DatasetPage : React.FC = () => {
 
     const handleViewHistogram = (fieldName: string) => {
         console.log("handleViewHistogram called for", fieldName);
-        const histogramUrl = histogramUrls.find(url => url.includes(fieldName)); // Find the URL related to the field
+        const histogramUrl = Array.isArray(histogramUrls)
+            ? histogramUrls.find(url => url.includes(fieldName))
+            : undefined; // Find the URL related to the field
         if (histogramUrl) {
             console.log("Histogram URL found for", histogramUrl);
             setIsViewHistogramClicked(!isViewHistogramClicked);
@@ -186,7 +188,10 @@ const DatasetPage : React.FC = () => {
 
     const handleViewBarChart = (fieldName: string) => {
         console.log("handleViewBarChart called for", fieldName);
-        const barChartUrl = barChartUrls.find(url => url.includes(fieldName)); // Find the URL related to the field
+        console.log("Bar Chart URLs: ", barChartUrls);
+        const barChartUrl = Array.isArray(barChartUrls)
+            ? barChartUrls.find(url => url.includes(fieldName))
+            : undefined; // Find the URL related to the field
         if (barChartUrl) {
             console.log("Bar Chart URL found for", barChartUrl);
             setIsViewBarChartClicked(!isViewBarChartClicked);
@@ -198,7 +203,9 @@ const DatasetPage : React.FC = () => {
 
     const handleViewBoxPlot = (fieldName: string) => {
         console.log("handleViewBoxPlot called for", fieldName);
-        const boxPlotUrl = boxPlotUrls.find(url => url.includes(fieldName)); // Find the URL related to the field
+        const boxPlotUrl = Array.isArray(boxPlotUrls)
+            ? boxPlotUrls.find(url => url.includes(fieldName))
+            : undefined; // Find the URL related to the field
         if (boxPlotUrl) {
             console.log("Box Plot URL found for", boxPlotUrl);
             setIsViewBoxPlotClicked(!isViewBoxPlotClicked);
@@ -260,7 +267,7 @@ const DatasetPage : React.FC = () => {
                                     className="histogram-iframe"
                                 /> */}
                             <div className="hover-iframe">
-                                {histogramUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                {Array.isArray(histogramUrls) && histogramUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
                                     src={`http://127.0.0.1:5000/static/histogramVisualisations/histogramVisualisations_${fileName}/histogram_${fieldProperty[0]}.html?ts=${Date.now()}`}
                                     className="histogram-iframe"
                                 />)}
@@ -279,7 +286,7 @@ const DatasetPage : React.FC = () => {
                                     className="histogram-iframe"
                                 /> */}
                             <div className="hover-iframe">
-                                {barChartUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                {Array.isArray(barChartUrls) && barChartUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
                                     src={`http://127.0.0.1:5000/static/barChartVisualisations/barChartVisualisations_${fileName}/bar_chart_${fieldProperty[0]}.html?ts=${Date.now()}`}
                                     className="histogram-iframe"
                                 />)} 
@@ -300,7 +307,7 @@ const DatasetPage : React.FC = () => {
                                 /> */}
                             <div className="hover-iframe">
 
-                                {boxPlotUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
+                                {Array.isArray(boxPlotUrls) && boxPlotUrls.some(url => url.includes(fieldProperty[0])) && (<iframe
                                     src={`http://127.0.0.1:5000/static/boxPlotVisualisations/boxPlotVisualisations_${fileName}/box_plot_${fieldProperty[0]}.html?ts=${Date.now()}`}
                                     className="histogram-iframe"
                                 />)}
